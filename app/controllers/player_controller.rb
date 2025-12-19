@@ -1,267 +1,183 @@
 class PlayerController < ApplicationController
-  before_action :require_login
+  # 認証不要 - 誰でも音楽を聴ける
 
   def show
-    # ピンからの遷移時にクエリパラメータでuriが来たらセッションに保存
-    if params[:uri].present?
-      session[:selected_playlist_uri] = params[:uri]
-    end
-    current_user.refresh_token_if_expired!
-    @spotify_user = current_user.to_rspotify_user
-    @access_token = @spotify_user.credentials['token']
-    session[:spotify_user_data] ||= {}
-    session[:spotify_user_data]['credentials'] ||= {}
-    session[:spotify_user_data]['credentials']['token'] = @access_token
+    youtube_service = YoutubeService.new
 
-    @playlists = @spotify_user.playlists
-    @selected_playlist_id = session[:selected_playlist_id]
-    @selected_playlist_uri = session[:selected_playlist_uri]
+    # 動画IDsを取得（トレンド音楽または近くの音楽）
+    @video_ids = if has_location_permission?
+                   fetch_nearby_music || fetch_trending_music(youtube_service)
+                 else
+                   fetch_trending_music(youtube_service)
+                 end
 
-    # 他ユーザープレイリストURIが優先
-    if @selected_playlist_uri.present?
-      uri_parts = @selected_playlist_uri.split(":")
-      if @selected_playlist_uri.start_with?("spotify:user:") && uri_parts.length >= 5
-        user_id = uri_parts[2]
-        playlist_id = uri_parts[4]
-      elsif @selected_playlist_uri.start_with?("spotify:playlist:") && uri_parts.length >= 3
-        user_id = nil
-        playlist_id = uri_parts[2]
-      else
-        user_id = nil
-        playlist_id = @selected_playlist_id
-      end
-
-      begin
-        playlist =
-          if user_id
-            RSpotify::Playlist.find(user_id, playlist_id)
-          else
-            RSpotify::Playlist.find_by_id(playlist_id)
-          end
-
-        if playlist && playlist.tracks.any?
-          @first_track = playlist.tracks.first
-          @first_track_uri = @first_track.uri
-          @all_track_uris = playlist.tracks.map(&:uri)
-        else
-          @first_track = nil
-          @first_track_uri = nil
-          @all_track_uris = []
-        end
-      rescue => e
-        Rails.logger.error "他ユーザープレイリスト取得エラー: #{e.message}"
-        @first_track = nil
-        @first_track_uri = nil
-        @all_track_uris = []
-      end
-
-    # 自分のプレイリスト選択時
-    elsif @selected_playlist_id.present?
-      selected_playlist = @playlists.find { |p| p.id == @selected_playlist_id }
-
-      if selected_playlist && selected_playlist.tracks.any?
-        @first_track = selected_playlist.tracks.first
-        @first_track_uri = @first_track.uri
-        @all_track_uris = selected_playlist.tracks.map(&:uri)
-      else
-        @first_track = nil
-        @first_track_uri = nil
-        @all_track_uris = []
-      end
-
-    # fallback
+    # 最初の動画の詳細を取得
+    if @video_ids.any?
+      @first_video = youtube_service.video_details(@video_ids.first)
     else
-      first_playlist = @playlists.first
-      if first_playlist&.tracks&.any?
-        @first_track = first_playlist.tracks.first
-        @first_track_uri = @first_track.uri
-        @all_track_uris = first_playlist.tracks.map(&:uri)
-      else
-        @first_track = nil
-        @first_track_uri = nil
-        @all_track_uris = []
-      end
+      @first_video = nil
     end
-
-    @user_location = current_user.has_location? ? {
-      latitude: current_user.latitude,
-      longitude: current_user.longitude,
-      location_name: current_user.location_name,
-      last_updated: current_user.last_location_update,
-      is_stale: current_user.location_stale?
-    } : nil
-
-  rescue RestClient::BadRequest, NoMethodError
-    log_out
-    redirect_to root_path, alert: 'Spotify session expired. Please login again.'
-  rescue => e
-    Rails.logger.error "RSpotify error: #{e.message}"
-    log_out
-    flash[:warning] = "Spotifyとの連携に問題が発生しました。再度ログインしてください。"
-    redirect_to root_path
   end
 
-  def save
-    current_user.refresh_token_if_expired!
-    spotify_user = current_user.to_rspotify_user
-    playlists = spotify_user.playlists
+  # いいね（ログイン必須）
+  def like
+    require_login_for_action
+    video_id = params[:video_id]
 
-    playlists.each do |playlist|
-      pl = current_user.playlists.find_or_create_by(spotify_id: playlist.id)
-      pl.update(
-        name: playlist.name,
-        latitude: current_user.latitude,
-        longitude: current_user.longitude
+    if video_id.present?
+      interaction = current_user.music_interactions.find_or_initialize_by(
+        video_id: video_id,
+        interaction_type: 'like'
+      )
+
+      if interaction.save
+        render json: { success: true, message: 'いいねしました' }
+      else
+        render json: { success: false, error: interaction.errors.full_messages }, status: :unprocessable_entity
+      end
+    else
+      render json: { success: false, error: '動画IDが必要です' }, status: :bad_request
+    end
+  end
+
+  # 嫌い（ログイン必須）
+  def dislike
+    require_login_for_action
+    video_id = params[:video_id]
+
+    if video_id.present?
+      interaction = current_user.music_interactions.find_or_initialize_by(
+        video_id: video_id,
+        interaction_type: 'dislike'
+      )
+
+      if interaction.save
+        render json: { success: true, message: '嫌いに登録しました' }
+      else
+        render json: { success: false, error: interaction.errors.full_messages }, status: :unprocessable_entity
+      end
+    else
+      render json: { success: false, error: '動画IDが必要です' }, status: :bad_request
+    end
+  end
+
+  # 再生履歴記録（ログイン時のみ）
+  def record_play
+    return unless logged_in?
+
+    video_id = params[:video_id]
+
+    if video_id.present?
+      current_user.music_interactions.create(
+        video_id: video_id,
+        interaction_type: 'play'
       )
     end
 
-    render json: { status: 'success' }
-  rescue => e
-    Rails.logger.error "RSpotify error in save: #{e.message}"
-    render json: { status: 'error', message: 'Spotifyとの連携に問題が発生しました。' }, status: :unprocessable_entity
+    head :no_content
   end
 
-  def update_selected_playlist
-    Rails.logger.info "update_selected_playlist called with params: #{params.inspect}"
-    
-    playlist_id = params[:playlist_id] || params.dig(:playlist, :id)
-    playlist_uri = params[:playlist_uri] || params.dig(:playlist, :uri)
-    
-    if playlist_id.present?
-      session[:selected_playlist_id] = playlist_id
-      Rails.logger.info "Selected playlist ID: #{playlist_id}"
-      render json: { status: 'success', playlist_id: playlist_id }
-    elsif playlist_uri.present?
-      playlist_id_from_uri = playlist_uri.split(':').last
-      session[:selected_playlist_id] = playlist_id_from_uri
-      Rails.logger.info "Selected playlist ID from URI: #{playlist_id_from_uri}"
-      render json: { status: 'success', playlist_id: playlist_id_from_uri }
-    else
-      Rails.logger.error "No playlist_id or playlist_uri provided"
-      render json: { status: 'error', message: 'プレイリストIDまたはURIが必要です' }, status: :bad_request
-    end
-  end
+  # 地図に音楽を投稿（ログイン必須）
+  def save_pin
+    require_login_for_action
 
-  def save_playlist
-    unless logged_in?
-      render json: { status: 'error', message: 'ログインが必要です。' }, status: :unauthorized
-      return
-    end
-
-    name = params[:name]
-    uri = params[:uri]
+    video_id = params[:video_id]
     latitude = params[:latitude]
     longitude = params[:longitude]
     location_name = params[:location_name]
 
-    if name.blank? || uri.blank?
-      render json: { status: 'error', message: 'プレイリスト情報が不足しています。' }, status: :unprocessable_entity
+    if video_id.blank? || latitude.blank? || longitude.blank?
+      render json: { success: false, error: '必須パラメータが不足しています' }, status: :bad_request
       return
     end
 
-    if latitude.blank? || longitude.blank?
-      render json: { status: 'error', message: '位置情報が設定されていません。' }, status: :unprocessable_entity
+    # YouTube動画詳細を取得
+    youtube_service = YoutubeService.new
+    video = youtube_service.video_details(video_id)
+
+    if video.nil?
+      render json: { success: false, error: '動画が見つかりません' }, status: :not_found
       return
     end
 
-    begin
-      playlist = current_user.playlist_locations.build(
-        name: name,
-        uri: uri,
-        latitude: latitude,
-        longitude: longitude,
-        location_name: location_name
-      )
+    # MusicPinを作成
+    music_pin = current_user.music_pins.new(
+      video_id: video_id,
+      name: video[:title],
+      channel_name: video[:channel_name],
+      thumbnail_url: video[:thumbnail],
+      duration: video[:duration],
+      latitude: latitude,
+      longitude: longitude,
+      location_name: location_name,
+      pin_type: 'song'
+    )
 
-      if playlist.save
-        render json: { status: 'success', message: "プレイリスト「#{name}」を保存しました" }
-      else
-        render json: {
-          status: 'error',
-          message: playlist.errors.full_messages.join(', ')
-        }, status: :unprocessable_entity
-      end
-    rescue => e
-      Rails.logger.error "PlaylistLocation creation error: #{e.message}"
-      render json: { status: 'error', message: e.message }, status: :unprocessable_entity
+    if music_pin.save
+      render json: { success: true, message: '地図に投稿しました', pin: music_pin }
+    else
+      render json: { success: false, error: music_pin.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
-  def locations
-    @playlist_locations = PlaylistLocation.includes(:user).order(created_at: :desc)
-    
-    Rails.logger.info "Playlist locations found: #{@playlist_locations.count}"
-    @playlist_locations.each do |location|
-      Rails.logger.info "Location: #{location.name}, User: #{location.user&.name || location.user&.nickname || 'Unknown'}"
-    end
-    
-    playlist_images = {}
-    if logged_in? && current_user.access_token.present?
-      begin
-        current_user.refresh_token_if_expired!
-        spotify_user = current_user.to_rspotify_user
-        all_playlists = spotify_user.playlists
-        all_playlists.each do |pl|
-          playlist_images[pl.id] = pl.images.first['url'] if pl.images&.any?
-        end
-      rescue => e
-        Rails.logger.error "Error fetching playlist images: #{e.message}"
+  # 地図上のピン一覧
+  def pins
+    music_pins = MusicPin.youtube_pins.recent.limit(100)
+
+    render json: {
+      pins: music_pins.map do |pin|
+        {
+          id: pin.id,
+          video_id: pin.video_id,
+          name: pin.name,
+          channel_name: pin.channel_name,
+          thumbnail_url: pin.thumbnail_url,
+          duration: pin.duration,
+          formatted_duration: pin.formatted_duration,
+          latitude: pin.latitude,
+          longitude: pin.longitude,
+          location_name: pin.location_name,
+          created_at: pin.created_at,
+          user: {
+            name: pin.user.name,
+            image: pin.user.profile_image_url
+          }
+        }
       end
-    end
-    
-    render json: @playlist_locations.map { |location|
-      playlist_id = location.uri&.split(':')&.last
-      {
-        id: location.id,
-        name: location.name,
-        uri: location.uri,
-        latitude: location.latitude,
-        longitude: location.longitude,
-        location_name: location.location_name,
-        created_at: location.created_at,
-        user_nickname: location.user&.name || location.user&.nickname || "不明なユーザー",
-        user_image: location.user&.image,
-        playlist_image: playlist_images[playlist_id]
-      }
     }
-  end
-
-  # プレイリストに曲を追加（重複チェック付き）
-  def add_track_to_playlist
-    playlist_id = params[:playlist_id]
-    track_uri = params[:track_uri]
-
-    if playlist_id.blank? || track_uri.blank?
-      render json: { status: 'error', message: 'パラメータが不足しています。' }, status: :bad_request
-      return
-    end
-
-    begin
-      spotify_user = current_user.to_rspotify_user
-      playlist = RSpotify::Playlist.find_by_id(playlist_id)
-
-      existing_uris = playlist.tracks.map(&:uri)
-      if existing_uris.include?(track_uri)
-        render json: { status: 'duplicate' }, status: :ok
-      else
-        track = RSpotify::Track.find(track_uri.split(':').last)
-        playlist.add_tracks!([track])
-        render json: { status: 'added' }, status: :ok
-      end
-    rescue => e
-      Rails.logger.error "エラー: #{e.message}"
-      render json: { status: 'error', message: '曲の追加中にエラーが発生しました。' }, status: :internal_server_error
-    end
   end
 
   private
 
-  def require_login
+  def has_location_permission?
+    # TODO: 実装 - クライアントから位置情報が送られてきたかチェック
+    params[:latitude].present? && params[:longitude].present?
+  end
+
+  def fetch_nearby_music
+    return nil unless has_location_permission?
+
+    latitude = params[:latitude].to_f
+    longitude = params[:longitude].to_f
+
+    # 近くの音楽ピンを取得
+    nearby_pins = MusicPin.youtube_pins.near_location(latitude, longitude, 10).limit(20)
+
+    if nearby_pins.any?
+      nearby_pins.pluck(:video_id)
+    else
+      nil
+    end
+  end
+
+  def fetch_trending_music(youtube_service)
+    trending_videos = youtube_service.trending_music_japan(max_results: 20)
+    trending_videos.map { |video| video[:video_id] }
+  end
+
+  def require_login_for_action
     unless logged_in?
-      respond_to do |format|
-        format.html { redirect_to root_path, alert: 'ログインが必要です。' }
-        format.json { render json: { error: 'ログインが必要です。' }, status: :unauthorized }
-      end
+      render json: { error: 'ログインが必要です' }, status: :unauthorized
     end
   end
 end
