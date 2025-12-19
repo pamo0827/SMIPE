@@ -10,14 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_19_040535) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_19_041144) do
   create_table "artists", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
 
-  create_table "playlist_locations", force: :cascade do |t|
+  create_table "music_interactions", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "video_id", null: false
+    t.string "interaction_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "video_id", "interaction_type"], name: "index_music_interactions_on_user_video_type", unique: true
+    t.index ["user_id"], name: "index_music_interactions_on_user_id"
+  end
+
+  create_table "music_pins", force: :cascade do |t|
     t.string "name"
     t.string "uri"
     t.float "latitude"
@@ -26,7 +36,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_040535) do
     t.integer "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id"], name: "index_playlist_locations_on_user_id"
+    t.string "video_id"
+    t.string "channel_name"
+    t.string "thumbnail_url"
+    t.integer "duration"
+    t.string "pin_type", default: "song"
+    t.index ["user_id"], name: "index_music_pins_on_user_id"
   end
 
   create_table "playlists", force: :cascade do |t|
@@ -64,6 +79,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_040535) do
     t.string "provider", default: "google"
   end
 
-  add_foreign_key "playlist_locations", "users"
+  add_foreign_key "music_interactions", "users"
+  add_foreign_key "music_pins", "users"
   add_foreign_key "playlists", "users"
 end

@@ -13,8 +13,13 @@ Rails.application.routes.draw do
   get '/auth/:provider/callback', to: 'sessions#create'
   post '/auth/:provider/callback', to: 'sessions#create'
   get '/auth/failure', to: 'sessions#failure'
-  
+
   delete '/logout', to: 'sessions#destroy', as: 'logout'
+
+  # YouTube API routes
+  get '/youtube/search', to: 'youtube#search'
+  get '/youtube/trending', to: 'youtube#trending'
+  get '/youtube/video/:id', to: 'youtube#video'
   get 'show', to: 'users#show'
   get "up" => "rails/health#show", as: :rails_health_check
   get '/static_pages/home', to: 'static_pages#home', as: 'static_pages_home'
