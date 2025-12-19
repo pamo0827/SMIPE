@@ -1,47 +1,33 @@
 class SessionsController < ApplicationController 
-  def create 
-    raw_data = request.env["omniauth.auth"]
+  def create
+    auth = request.env["omniauth.auth"]
 
-    unless raw_data[:uid] 
-      flash[:danger] = "連携に失敗しました" 
-      redirect_to root_url and return 
-    end 
+    unless auth[:uid]
+      flash[:danger] = "連携に失敗しました"
+      redirect_to root_url and return
+    end
 
-    # 必要な情報を再構築（credentialsやinfoを保持）
-    user_data = {
-      uid:   raw_data[:uid],
-      name:  raw_data[:info][:name],
-      nickname: raw_data[:info][:nickname],
-      image: raw_data[:info][:image],
-      credentials: {
-        token: raw_data[:credentials][:token],
-        refresh_token: raw_data[:credentials][:refresh_token],
-        expires: raw_data[:credentials][:expires],
-        expires_at: raw_data[:credentials][:expires_at]
-      },
-      info: raw_data[:info]
-    }
-
-    user = User.find_by(uid: user_data[:uid]) 
+    user = User.find_by(uid: auth[:uid], provider: auth[:provider])
 
     if user
+      # 既存ユーザーの情報を更新
       user.update(
-        access_token: user_data[:credentials][:token],
-        refresh_token: user_data[:credentials][:refresh_token],
-        expires_at: Time.at(user_data[:credentials][:expires_at])
+        name: auth[:info][:name],
+        email: auth[:info][:email],
+        image: auth[:info][:image]
       )
       log_in(user)
       flash[:success] = "ログインしました"
       redirect_to player_page_path
     else
+      # 新規ユーザーを作成
       new_user = User.new(
-        uid: user_data[:uid],
-        name: user_data[:name],
-        nickname: user_data[:nickname],
-        image: user_data[:image],
-        access_token: user_data[:credentials][:token],
-        refresh_token: user_data[:credentials][:refresh_token],
-        expires_at: Time.at(user_data[:credentials][:expires_at])
+        uid: auth[:uid],
+        provider: auth[:provider],
+        name: auth[:info][:name],
+        nickname: auth[:info][:name], # Google OAuthではnicknameの代わりにnameを使用
+        email: auth[:info][:email],
+        image: auth[:info][:image]
       )
 
       if new_user.save
@@ -52,7 +38,7 @@ class SessionsController < ApplicationController
         flash[:danger] = "予期せぬエラーが発生しました"
         redirect_to root_url
       end
-    end 
+    end
   end 
 
   def failure
@@ -69,10 +55,9 @@ class SessionsController < ApplicationController
     redirect_to root_url
   end
 
-  def destroy 
-    log_out if logged_in? 
-    session.delete(:spotify_user_data)
-    flash[:success] = "ログアウトしました" 
+  def destroy
+    log_out if logged_in?
+    flash[:success] = "ログアウトしました"
     redirect_to root_url(logged_out: true)
   end 
 

@@ -2,9 +2,10 @@ source "https://rubygems.org"
 
 gem "dotenv-rails"
 gem "omniauth"
-gem "omniauth-spotify"
+gem "omniauth-google-oauth2"
 gem "omniauth-rails_csrf_protection"
-gem "rspotify"
+gem "google-api-client"
+gem "redis"
 gem "geocoder"
 gem "activerecord-session_store"
 

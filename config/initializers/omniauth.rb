@@ -1,8 +1,10 @@
 # config/initializers/omniauth.rb
 Rails.application.config.middleware.use OmniAuth::Builder do
-  provider :spotify, ENV['SPOTIFY_CLIENT_ID'], ENV['SPOTIFY_CLIENT_SECRET'],
-           scope: 'user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public streaming user-modify-playback-state user-read-playback-state user-read-currently-playing user-library-read user-library-modify',
-           callback_url: ENV['SPOTIFY_CALLBACK_URL']
+  provider :google_oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'],
+           scope: 'email,profile',
+           prompt: 'select_account',
+           image_aspect_ratio: 'square',
+           image_size: 50
 end
 
 # 失敗時の処理
