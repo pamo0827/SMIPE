@@ -1,17 +1,16 @@
 class MapsController < ApplicationController
-  before_action :require_login
+  before_action :require_login, only: [:create_pin]
 
+  # 地図ページ（公開アクセス）
   def index
-    # ユーザーの位置情報を取得
-    @user_location = if current_user.has_location?
+    # ログインユーザーの位置情報を取得
+    @user_location = if logged_in? && current_user.has_location?
       {
         latitude: current_user.latitude,
         longitude: current_user.longitude,
         location_name: current_user.location_name
       }
     else
-      # 緯度・経度がnilの場合でも、@user_location自体はハッシュとして存在させる
-      # ただし、nilのままroundを呼ばないようにビュー側でnilチェックを強化する
       {
         latitude: nil,
         longitude: nil,
@@ -24,26 +23,86 @@ class MapsController < ApplicationController
       results = Geocoder.search([@user_location[:latitude], @user_location[:longitude]])
       @user_location[:address] = results.first.address if results.first
     end
+  end
 
-    # Spotifyプレイリストの取得
-    if logged_in? && current_user.access_token.present?
-      begin
-        current_user.refresh_token_if_expired!
-        @spotify_user = current_user.to_rspotify_user
-        @playlists = @spotify_user.playlists.map do |playlist|
-          {
-            name: playlist.name,
-            uri: playlist.uri
+  # 地図上の音楽ピン一覧（公開アクセス）
+  def pins
+    music_pins = MusicPin.youtube_pins.recent.limit(100)
+
+    render json: {
+      pins: music_pins.map do |pin|
+        {
+          id: pin.id,
+          video_id: pin.video_id,
+          name: pin.name,
+          channel_name: pin.channel_name,
+          thumbnail_url: pin.thumbnail_url,
+          duration: pin.duration,
+          formatted_duration: pin.formatted_duration,
+          latitude: pin.latitude,
+          longitude: pin.longitude,
+          location_name: pin.location_name,
+          created_at: pin.created_at,
+          user: {
+            name: pin.user.name,
+            image: pin.user.profile_image_url
           }
-        end
-      rescue => e
-        Rails.logger.error "RSpotify error in maps: #{e.message}"
-        @playlists = []
-        flash[:warning] = "Spotifyとの連携に問題が発生しました。再度ログインしてください。"
+        }
       end
+    }
+  end
+
+  # 地図に音楽を投稿（ログイン必須）
+  def create_pin
+    video_id = params[:video_id]
+    latitude = params[:latitude]
+    longitude = params[:longitude]
+    location_name = params[:location_name]
+
+    if video_id.blank? || latitude.blank? || longitude.blank?
+      render json: { success: false, error: '必須パラメータが不足しています' }, status: :bad_request
+      return
+    end
+
+    # YouTube動画詳細を取得
+    youtube_service = YoutubeService.new
+    video = youtube_service.video_details(video_id)
+
+    if video.nil?
+      render json: { success: false, error: '動画が見つかりません' }, status: :not_found
+      return
+    end
+
+    # MusicPinを作成
+    music_pin = current_user.music_pins.new(
+      video_id: video_id,
+      name: video[:title],
+      channel_name: video[:channel_name],
+      thumbnail_url: video[:thumbnail],
+      duration: video[:duration],
+      latitude: latitude,
+      longitude: longitude,
+      location_name: location_name,
+      pin_type: 'song'
+    )
+
+    if music_pin.save
+      render json: {
+        success: true,
+        message: '地図に投稿しました',
+        pin: {
+          id: music_pin.id,
+          video_id: music_pin.video_id,
+          name: music_pin.name,
+          channel_name: music_pin.channel_name,
+          thumbnail_url: music_pin.thumbnail_url,
+          latitude: music_pin.latitude,
+          longitude: music_pin.longitude,
+          location_name: music_pin.location_name
+        }
+      }
     else
-      @playlists = []
-      flash[:warning] = "Spotifyとの連携が必要です。"
+      render json: { success: false, error: music_pin.errors.full_messages }, status: :unprocessable_entity
     end
   end
 

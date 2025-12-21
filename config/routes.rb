@@ -27,6 +27,8 @@ Rails.application.routes.draw do
   get '/privacy', to: 'static_pages#privacy', as: 'privacy'
   get '/player', to: 'player#show', as: 'player_page'
   get 'map', to: 'maps#index'
+  get '/map/pins', to: 'maps#pins'
+  post '/map/create_pin', to: 'maps#create_pin'
   get '/login', to: 'sessions#login', as: 'login'
 
   # modelsブランチのルート
