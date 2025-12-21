@@ -4,10 +4,17 @@
     <h1 class="app-title">SMIPE</h1>
     <p class="app-tagline">音楽で、世界とつながる。あなたのいる場所が、新しいプレイリストになる。</p>
     <div class="login-box">
+      <!-- プライマリCTA: ログイン不要で音楽体験 -->
+      <%= link_to '音楽を聴く', player_page_path, class: 'btn-primary', style: 'display: inline-block; padding: 15px 40px; background-color: #1DB954; color: white; text-decoration: none; border-radius: 30px; font-size: 1.1em; font-weight: bold; margin-bottom: 15px;' %>
+
       <% if !logged_in? %>
-        <%= button_to '/auth/google_oauth2', method: :post, class: 'login-link', params: { authenticity_token: form_authenticity_token }, data: { turbo: false } do %>
-          <i class="fab fa-google"></i> Googleでログイン
-        <% end %>
+        <div style="margin-top: 20px;">
+          <!-- セカンダリCTA: 投稿用ログイン -->
+          <%= button_to '/auth/google_oauth2', method: :post, class: 'login-link', params: { authenticity_token: form_authenticity_token }, data: { turbo: false }, style: 'background-color: transparent; border: 2px solid #1DB954; color: #1DB954; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-size: 1em;' do %>
+            <i class="fab fa-google"></i> Googleでログイン
+          <% end %>
+          <p style="margin-top: 10px; font-size: 0.9em; color: #B3B3B3;">※ログインは地図への音楽投稿に必要です</p>
+        </div>
       <% end %>
     </div>
   </div>
@@ -36,4 +43,8 @@
 
 <footer>
   <p>&copy; 2024 SMIPE. All Rights Reserved.</p>
+  <p style="margin-top: 10px;">
+    <%= link_to '利用規約', terms_path, style: 'color: #1DB954; text-decoration: none;' %> |
+    <%= link_to 'プライバシーポリシー', privacy_path, style: 'color: #1DB954; text-decoration: none;' %>
+  </p>
 </footer>

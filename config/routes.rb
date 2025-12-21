@@ -23,6 +23,8 @@ Rails.application.routes.draw do
   get 'show', to: 'users#show'
   get "up" => "rails/health#show", as: :rails_health_check
   get '/static_pages/home', to: 'static_pages#home', as: 'static_pages_home'
+  get '/terms', to: 'static_pages#terms', as: 'terms'
+  get '/privacy', to: 'static_pages#privacy', as: 'privacy'
   get '/player', to: 'player#show', as: 'player_page'
   get 'map', to: 'maps#index'
   get '/login', to: 'sessions#login', as: 'login'
