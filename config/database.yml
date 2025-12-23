@@ -34,13 +34,13 @@ test:
 production:
   primary:
     <<: *default
-    database: tmp/production.sqlite3
+    database: <%= ENV.fetch("DATABASE_PATH", "/data") %>/production.sqlite3
   cable:
     <<: *default
-    database: tmp/cable.sqlite3
+    database: <%= ENV.fetch("DATABASE_PATH", "/data") %>/cable.sqlite3
   queue:
     <<: *default
-    database: tmp/queue.sqlite3
+    database: <%= ENV.fetch("DATABASE_PATH", "/data") %>/queue.sqlite3
   cache:
     <<: *default
-    database: tmp/cache.sqlite3
+    database: <%= ENV.fetch("DATABASE_PATH", "/data") %>/cache.sqlite3
