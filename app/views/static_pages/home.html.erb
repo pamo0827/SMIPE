@@ -1,49 +1,50 @@
-<div class="landing-hero">
-  <div class="landing-content">
-    <%= image_tag 'SMIPE_logo.png', class: 'landing-logo', alt: 'SMIPE Logo' %>
-    <h1 class="landing-title">世界は、音楽で満ちている。</h1>
-    <p class="landing-subtitle">あなたの現在地が、誰かのプレイリストになる。<br>位置情報 × 音楽共有プラットフォーム</p>
-    
-    <div class="cta-buttons">
-      <%= link_to player_page_path, class: 'btn-primary' do %>
-        <i class="fas fa-play"></i> 今すぐ聴く
-      <% end %>
+<div class="hero hero-compact">
+  <div class="hero-content">
+    <img src="<%= asset_path('favicon.ico') %>" alt="SMIPE Logo" class="hero-logo">
+    <h1 class="app-title">SMIPE</h1>
+    <p class="app-tagline">音楽で、世界とつながる。あなたのいる場所が、新しいプレイリストになる。</p>
+    <div class="login-box">
+      <!-- プライマリCTA: ログイン不要で音楽体験 -->
+      <%= link_to '音楽を聴く', player_page_path, class: 'btn-primary', style: 'display: inline-block; padding: 15px 40px; background-color: #1DB954; color: white; text-decoration: none; border-radius: 30px; font-size: 1.1em; font-weight: bold; margin-bottom: 15px;' %>
 
-      <% unless logged_in? %>
+      <% if !logged_in? %>
         <div style="margin-top: 20px;">
-          <%= button_to '/auth/google_oauth2', method: :post, class: 'btn-secondary', params: { authenticity_token: form_authenticity_token }, data: { turbo: false } do %>
+          <!-- セカンダリCTA: 投稿用ログイン -->
+          <%= button_to '/auth/google_oauth2', method: :post, class: 'login-link', params: { authenticity_token: form_authenticity_token }, data: { turbo: false }, style: 'background-color: transparent; border: 2px solid #1DB954; color: #1DB954; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-size: 1em;' do %>
             <i class="fab fa-google"></i> Googleでログイン
           <% end %>
+          <p style="margin-top: 10px; font-size: 0.9em; color: #B3B3B3;">※ログインは地図への音楽投稿に必要です</p>
         </div>
       <% end %>
     </div>
   </div>
 </div>
 
-<section class="features-section">
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon"><i class="fas fa-map-marked-alt"></i></div>
-      <h3 class="feature-title">Map Your Music</h3>
-      <p class="feature-desc">お気に入りの場所にお気に入りの曲をピン留めしよう。その場所に行けば、その曲が聴こえてくる。</p>
+<section class="features">
+  <h2 class="section-title">SMIPEでできること</h2>
+  <div class="feature-grid">
+    <div class="feature-item">
+      <i class="fas fa-map-marker-alt feature-icon"></i>
+      <h3>現在地を共有</h3>
+      <p>あなたのいる場所を友達と共有し、近くにいる人を見つけよう。</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon"><i class="fas fa-headphones-alt"></i></div>
-      <h3 class="feature-title">Discover Nearby</h3>
-      <p class="feature-desc">街を歩いて、新しい音楽と出会おう。近くのユーザーが聴いている曲をリアルタイムで発見。</p>
+    <div class="feature-item">
+      <i class="fas fa-music feature-icon"></i>
+      <h3>音楽を発見</h3>
+      <p>他の人が聴いている音楽から、新しいお気に入りを見つけよう。</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon"><i class="fas fa-exchange-alt"></i></div>
-      <h3 class="feature-title">Share & Connect</h3>
-      <p class="feature-desc">スワイプ操作で簡単に曲を交換。音楽の趣味で繋がる新しいコミュニティ。</p>
+    <div class="feature-item">
+      <i class="fas fa-users feature-icon"></i>
+      <h3>友達とつながる</h3>
+      <p>共通の音楽の好みを持つ友達と、もっと深くつながろう。</p>
     </div>
   </div>
 </section>
 
-<footer class="site-footer">
+<footer>
   <p>&copy; 2024 SMIPE. All Rights Reserved.</p>
-  <div class="footer-links">
-    <%= link_to '利用規約', terms_path %>
-    <%= link_to 'プライバシーポリシー', privacy_path %>
-  </div>
+  <p style="margin-top: 10px;">
+    <%= link_to '利用規約', terms_path, style: 'color: #1DB954; text-decoration: none;' %> |
+    <%= link_to 'プライバシーポリシー', privacy_path, style: 'color: #1DB954; text-decoration: none;' %>
+  </p>
 </footer>

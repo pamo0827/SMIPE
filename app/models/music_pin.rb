@@ -1,13 +1,21 @@
 class MusicPin < ApplicationRecord
   belongs_to :user
-  has_many :music_queue_items, dependent: :destroy
 
   # Pin types
   PIN_TYPES = %w[song album legacy_spotify].freeze
 
   # Validations
-  validates :name, presence: true
+  validates :name, :latitude, :longitude, :location_name, presence: true
   validates :pin_type, inclusion: { in: PIN_TYPES }
+
+  validates :latitude, numericality: {
+    greater_than_or_equal_to: -90,
+    less_than_or_equal_to: 90
+  }
+  validates :longitude, numericality: {
+    greater_than_or_equal_to: -180,
+    less_than_or_equal_to: 180
+  }
 
   # YouTube pins require video_id
   validates :video_id, presence: true, if: -> { youtube_pin? }
@@ -18,10 +26,23 @@ class MusicPin < ApplicationRecord
   scope :songs, -> { where(pin_type: 'song') }
   scope :albums, -> { where(pin_type: 'album') }
 
+  scope :near_location, ->(lat, lng, radius_km = 10) {
+    where(
+      "6371 * acos(cos(radians(?)) * cos(radians(latitude)) *
+       cos(radians(longitude) - radians(?)) +
+       sin(radians(?)) * sin(radians(latitude))) < ?",
+      lat, lng, lat, radius_km
+    )
+  }
+
   scope :recent, -> { order(created_at: :desc) }
   scope :popular, -> { order(created_at: :desc) } # TODO: Add view count or like count
 
   # Helper methods
+  def coordinates
+    [latitude, longitude]
+  end
+
   def youtube_pin?
     pin_type.in?(['song', 'album'])
   end

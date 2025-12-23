@@ -4,8 +4,7 @@ Rails.application.config.middleware.use OmniAuth::Builder do
            scope: 'email,profile',
            prompt: 'select_account',
            image_aspect_ratio: 'square',
-           image_size: 50,
-           redirect_uri: 'http://localhost:3000/auth/google_oauth2/callback'
+           image_size: 50
 end
 
 # 失敗時の処理

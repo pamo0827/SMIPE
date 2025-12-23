@@ -111,6 +111,7 @@
 
 /* Mobile Navigation Menu */
 .mobile-nav {
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -122,28 +123,12 @@
   z-index: 1001;
   overflow-y: auto;
   transition: transform 0.3s ease-in-out;
+  transform: translateX(-100%);
 }
 
-/* デスクトップ: メニューを常に表示 */
-@media (min-width: 769px) {
-  .mobile-nav {
-    transform: translateX(0);
-  }
-
-  .hamburger-menu {
-    display: none;
-  }
-}
-
-/* モバイル: ハンバーガーメニューで開閉 */
-@media (max-width: 768px) {
-  .mobile-nav {
-    transform: translateX(-100%);
-  }
-
-  .mobile-nav.is-open {
-    transform: translateX(0);
-  }
+.mobile-nav.is-open {
+  display: block;
+  transform: translateX(0);
 }
 
 .mobile-nav-list {
