@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["albumArt", "albumImage", "videoPlayer", "songTitle", "artistName",
-                    "progressBar", "currentTime", "duration", "playPauseButton",
+                    "progressBar", "progressBarFill", "currentTime", "duration", "playPauseButton",
                     "playIcon", "pauseIcon", "likeButton", "dislikeButton"]
 
   static values = {
@@ -136,6 +136,10 @@ export default class extends Controller {
 
     const percentage = (currentTime / duration) * 100
     this.progressBarTarget.value = percentage
+    
+    if (this.hasProgressBarFillTarget) {
+      this.progressBarFillTarget.style.width = `${percentage}%`
+    }
 
     if (this.hasCurrentTimeTarget) {
       this.currentTimeTarget.textContent = this.formatTime(currentTime)
@@ -235,6 +239,10 @@ export default class extends Controller {
     const duration = this.player.getDuration()
     const seekTime = (percentage / 100) * duration
     this.player.seekTo(seekTime, true)
+    
+    if (this.hasProgressBarFillTarget) {
+      this.progressBarFillTarget.style.width = `${percentage}%`
+    }
   }
 
   // Swipe gesture handling (keep existing logic from player_controller.js)
@@ -432,8 +440,8 @@ export default class extends Controller {
   }
 
   handleSwipeUp() {
-    // Next track
-    this.handleNext()
+    // 曲をキューに投稿
+    this.postToQueue()
   }
 
   handleSwipeDown() {
@@ -451,5 +459,70 @@ export default class extends Controller {
     const videoId = this.videoIdsValue[this.currentIndexValue]
     console.log('Dislike video:', videoId)
     // TODO: Implement dislike API call when user is logged in
+  }
+
+  // 曲をキューに投稿
+  async postToQueue() {
+    const videoId = this.videoIdsValue[this.currentIndexValue]
+
+    if (!videoId) {
+      console.error('No video ID to post')
+      return
+    }
+
+    try {
+      const response = await fetch('/queue/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': this.getMetaValue('csrf-token')
+        },
+        body: JSON.stringify({ video_id: videoId })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        this.showToast(`キューに追加しました！（順番: ${data.queue_position}）`, 'success')
+        this.handleNext() // 次の曲へ
+      } else {
+        this.showToast(data.error || 'キューへの追加に失敗しました', 'error')
+      }
+    } catch (error) {
+      console.error('Queue add error:', error)
+      this.showToast('通信エラーが発生しました', 'error')
+    }
+  }
+
+  // トースト通知を表示
+  showToast(message, type = 'info') {
+    const toast = document.createElement('div')
+    toast.className = `toast toast-${type}`
+    toast.textContent = message
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 15px 20px;
+      background-color: ${type === 'success' ? '#1DB954' : '#E74C3C'};
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 1000;
+      animation: fadeInOut 3s ease-in-out;
+    `
+
+    document.body.appendChild(toast)
+
+    setTimeout(() => {
+      toast.remove()
+    }, 3000)
+  }
+
+  // CSRF トークン取得
+  getMetaValue(name) {
+    const element = document.querySelector(`meta[name="${name}"]`)
+    return element ? element.getAttribute('content') : ''
   }
 }

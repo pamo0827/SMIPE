@@ -1,0 +1,206 @@
+<div class="settings-container">
+  <main class="settings-content">
+    <h1 class="settings-title">設定</h1>
+
+    <!-- ユーザーネーム編集 -->
+    <section class="settings-section">
+      <h2 class="section-title">ユーザーネーム</h2>
+      <div class="setting-item">
+        <input type="text" id="username-input" value="<%= current_user.name %>" class="settings-input" placeholder="ユーザーネーム">
+        <button id="update-username-btn" class="settings-button">更新</button>
+      </div>
+    </section>
+
+    <!-- 音量調整 -->
+    <section class="settings-section">
+      <h2 class="section-title">音量調整</h2>
+      <div class="setting-item">
+        <input type="range" id="volume-slider" min="0" max="100" value="100" class="volume-slider">
+        <span id="volume-value" class="volume-value">100%</span>
+      </div>
+    </section>
+
+    <!-- アカウント削除 -->
+    <section class="settings-section danger-section">
+      <h2 class="section-title">アカウント削除</h2>
+      <p class="warning-text">この操作は取り消せません。アカウントとすべてのデータが削除されます。</p>
+      <button id="delete-account-btn" class="settings-button danger-button">アカウントを削除</button>
+    </section>
+  </main>
+</div>
+
+<style>
+  .settings-container {
+    background-color: #121212;
+    color: #FFFFFF;
+    min-height: 100vh;
+    padding-top: 70px;
+  }
+
+  .settings-content {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+
+  .settings-title {
+    font-size: 2em;
+    font-weight: 700;
+    margin-bottom: 30px;
+    color: #FFFFFF;
+  }
+
+  .settings-section {
+    background-color: #181818;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #FFFFFF;
+  }
+
+  .setting-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .settings-input {
+    flex: 1;
+    padding: 10px 15px;
+    background-color: #282828;
+    border: 1px solid #535353;
+    border-radius: 5px;
+    color: #FFFFFF;
+    font-size: 1em;
+  }
+
+  .settings-button {
+    padding: 10px 20px;
+    background-color: #1DB954;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .settings-button:hover {
+    background-color: #1ED760;
+  }
+
+  .volume-slider {
+    flex: 1;
+    accent-color: #1DB954;
+  }
+
+  .volume-value {
+    min-width: 50px;
+    text-align: right;
+    color: #B3B3B3;
+    font-size: 0.9em;
+  }
+
+  .danger-section {
+    border: 1px solid #E74C3C;
+  }
+
+  .warning-text {
+    color: #E74C3C;
+    margin-bottom: 15px;
+    font-size: 0.95em;
+  }
+
+  .danger-button {
+    background-color: #E74C3C;
+  }
+
+  .danger-button:hover {
+    background-color: #C0392B;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // ユーザーネーム更新
+    document.getElementById('update-username-btn').addEventListener('click', async () => {
+      const username = document.getElementById('username-input').value
+
+      try {
+        const response = await fetch('/settings/update_username', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+          },
+          body: JSON.stringify({ name: username })
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          alert(data.message)
+        } else {
+          alert('エラー: ' + data.error)
+        }
+      } catch (error) {
+        console.error('Update username error:', error)
+        alert('通信エラーが発生しました')
+      }
+    })
+
+    // 音量調整
+    const volumeSlider = document.getElementById('volume-slider')
+    const volumeValue = document.getElementById('volume-value')
+
+    // Load saved volume from localStorage
+    const savedVolume = localStorage.getItem('playerVolume') || 100
+    volumeSlider.value = savedVolume
+    volumeValue.textContent = savedVolume + '%'
+
+    volumeSlider.addEventListener('input', (e) => {
+      const volume = e.target.value
+      volumeValue.textContent = volume + '%'
+      localStorage.setItem('playerVolume', volume)
+
+      // 音量変更イベントをディスパッチ
+      window.dispatchEvent(new CustomEvent('volumechange', { detail: { volume: volume / 100 } }))
+    })
+
+    // アカウント削除
+    document.getElementById('delete-account-btn').addEventListener('click', async () => {
+      if (!confirm('本当にアカウントを削除しますか？この操作は取り消せません。')) {
+        return
+      }
+
+      try {
+        const response = await fetch('/settings/delete_account', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+          }
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          alert(data.message)
+          window.location.href = data.redirect
+        } else {
+          alert('エラー: ' + data.error)
+        }
+      } catch (error) {
+        console.error('Delete account error:', error)
+        alert('通信エラーが発生しました')
+      }
+    })
+  })
+</script>

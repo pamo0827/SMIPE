@@ -2,13 +2,8 @@ Rails.application.routes.draw do
   # Chrome DevToolsの不要なリクエストを無視する
   get '/.well-known/appspecific/com.chrome.devtools.json', to: ->(env) { [204, {}, []] }
 
-  root 'static_pages#home'
-  resources :locations, only: [:show, :update] do
-    collection do
-      get :reverse_geocode
-    end
-  end
-  
+  root 'player#show'
+
   # OmniAuth routes
   get '/auth/:provider/callback', to: 'sessions#create'
   post '/auth/:provider/callback', to: 'sessions#create'
@@ -26,10 +21,20 @@ Rails.application.routes.draw do
   get '/terms', to: 'static_pages#terms', as: 'terms'
   get '/privacy', to: 'static_pages#privacy', as: 'privacy'
   get '/player', to: 'player#show', as: 'player_page'
-  get 'map', to: 'maps#index'
-  get '/map/pins', to: 'maps#pins'
-  post '/map/create_pin', to: 'maps#create_pin'
   get '/login', to: 'sessions#login', as: 'login'
+
+  # グローバルキュー関連
+  namespace :queue do
+    post 'add', to: 'music_queue#add'
+    get 'next', to: 'music_queue#next'
+    get 'status', to: 'music_queue#status'
+  end
+
+  # 設定画面
+  get '/settings', to: 'settings#show', as: 'settings'
+  patch '/settings/update_username', to: 'settings#update_username'
+  patch '/settings/update_volume', to: 'settings#update_volume'
+  delete '/settings/delete_account', to: 'settings#delete_account'
 
   # modelsブランチのルート
   post 'save_playlist', to: 'player#save_playlist'

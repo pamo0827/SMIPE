@@ -1,131 +1,252 @@
-.album-art-section {
-  position: relative;
-  width: 100%;
-  height: 100%;
+/* Player Specific Styles */
+.player-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #2c3e50 0%, #000000 100%);
   display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
+  flex-direction: column;
+  color: white;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-.album-art {
+.player-header {
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.player-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px 24px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Album Art */
+.album-art-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+  position: relative;
+  width: 100%;
+  max-height: 50vh; /* Adjust based on screen height */
+}
+
+.album-art-card {
+  width: 100%;
+  aspect-ratio: 1/1;
+  max-width: 400px;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  position: relative;
+  background-color: #333;
+  overflow: hidden;
+  transition: transform 0.1s ease-out;
+  cursor: grab;
+}
+
+.album-art-card:active {
+  cursor: grabbing;
+}
+
+.album-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  cursor: grab;
-  will-change: transform, opacity;
-  transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
+  display: block;
 }
 
-.album-art:active {
-  cursor: grabbing;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+/* Track Info */
+.track-info {
+  margin-bottom: 30px;
 }
 
-.album-art:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+.track-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* スワイプ方向のインジケーター */
-.swipe-indicator {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
+.artist-name {
+  font-size: 1.1rem;
+  color: #b3b3b3;
+  margin: 0;
+}
+
+/* Progress Bar */
+.progress-container {
   display: flex;
-  justify-content: center;
   align-items: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
+  gap: 12px;
+  margin-bottom: 30px;
 }
 
-.swipe-indicator.right {
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
+.progress-time {
+  font-size: 0.8rem;
+  color: #b3b3b3;
+  min-width: 35px;
 }
 
-.swipe-indicator.left {
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
+.progress-bar-wrapper {
+  flex: 1;
+  height: 4px;
+  background-color: rgba(255,255,255,0.3);
+  border-radius: 2px;
+  position: relative;
+  cursor: pointer;
 }
 
-.swipe-indicator.up {
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.swipe-indicator.down {
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-/* スワイプ中の視覚的フィードバック */
-.swiping {
+.progress-bar-fill {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 1;
+  height: 100%;
+  background-color: #1DB954; /* Spotify Green */
+  border-radius: 2px;
+  width: 0%; /* Dynamic */
 }
 
-.swiping::before {
-  content: '';
+.progress-bar-thumb {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+  top: 50%;
+  right: -6px; /* Half of thumb width */
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background-color: #fff;
+  border-radius: 50%;
+  display: none; /* Show on hover/active */
+}
+
+.progress-bar-wrapper:hover .progress-bar-thumb {
+  display: block;
+}
+
+.progress-bar-wrapper:hover .progress-bar-fill {
+  background-color: #1ed760;
+}
+
+/* Controls */
+.player-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.control-btn {
+  background: none;
+  border: none;
+  color: #b3b3b3;
+  cursor: pointer;
+  padding: 10px;
+  transition: color 0.2s, transform 0.1s;
+}
+
+.control-btn:hover {
+  color: white;
+}
+
+.control-btn:active {
+  transform: scale(0.95);
+}
+
+.control-btn.play-pause {
+  background-color: white;
+  color: black;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+}
+
+.control-btn.play-pause:hover {
+  transform: scale(1.05);
+  color: black;
+}
+
+.control-btn svg {
+  width: 28px;
+  height: 28px;
+  fill: currentColor;
+}
+
+.control-btn.play-pause svg {
+  width: 32px;
+  height: 32px;
+}
+
+.control-btn.secondary svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Swipe Indicators */
+.swipe-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.4);
 }
 
-.swiping.active::before {
-  opacity: 1;
+.swipe-icon {
+  font-size: 3rem;
+  color: white;
+  transform: scale(0.8);
+  transition: transform 0.2s;
 }
 
-/* トランジションアニメーション */
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+.album-art-card.swiping-right .swipe-overlay.right { opacity: 1; }
+.album-art-card.swiping-left .swipe-overlay.left { opacity: 1; }
+.album-art-card.swiping-up .swipe-overlay.up { opacity: 1; }
+.album-art-card.swiping-down .swipe-overlay.down { opacity: 1; }
+
+.swipe-overlay.right { background: rgba(29, 185, 84, 0.7); } /* Like - Green */
+.swipe-overlay.left { background: rgba(233, 30, 99, 0.7); } /* Dislike - Pink/Red */
+.swipe-overlay.up { background: rgba(33, 150, 243, 0.7); } /* Exchange - Blue */
+.swipe-overlay.down { background: rgba(255, 193, 7, 0.7); } /* Back - Amber */
+
+/* Exchange Button Area */
+.exchange-area {
+  text-align: center;
+  margin-top: auto;
 }
 
-@keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+.btn-exchange {
+  width: 100%;
+  padding: 16px;
+  background-color: #282828;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background-color 0.2s;
 }
 
-.album-art-section {
-  animation: fadeIn 0.5s ease;
+.btn-exchange:hover {
+  background-color: #333;
 }
-
-/* スワイプ方向に応じた背景グラデーション */
-.swipe-right {
-  background: linear-gradient(90deg, rgba(29,185,84,0.1), transparent);
-}
-
-.swipe-left {
-  background: linear-gradient(-90deg, rgba(255,0,0,0.1), transparent);
-}
-
-.swipe-up {
-  background: linear-gradient(0deg, rgba(29,185,84,0.1), transparent);
-}
-
-.swipe-down {
-  background: linear-gradient(180deg, rgba(29,185,84,0.1), transparent);
-} 
