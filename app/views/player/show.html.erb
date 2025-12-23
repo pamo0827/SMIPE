@@ -34,11 +34,12 @@
 
       <!-- スワイプ中の視覚的フィードバック -->
       <div class="swiping"></div>
+    </div>
 
-      <div class="track-details">
-        <p class="song-title" data-youtube-player-target="songTitle"><%= @first_video&.[](:title) || 'No Video' %></p>
-        <p class="artist-name" data-youtube-player-target="artistName"><%= @first_video&.[](:channel_name) || 'Unknown Channel' %></p>
-      </div>
+    <!-- トラック詳細を画像の下に移動 -->
+    <div class="track-details">
+      <p class="song-title" data-youtube-player-target="songTitle"><%= @first_video&.[](:title) || 'No Video' %></p>
+      <p class="artist-name" data-youtube-player-target="artistName"><%= @first_video&.[](:channel_name) || 'Unknown Channel' %></p>
     </div>
 
     <!-- 再生バー（シークバー） -->
@@ -110,13 +111,13 @@
         <%= button_to 'Googleでログイン', '/auth/google_oauth2', method: :post, class: 'btn-secondary', params: { authenticity_token: form_authenticity_token }, data: { turbo: false } %>
       </div>
     <% end %>
-
-    <footer style="text-align: center; margin-top: 30px; padding: 20px; color: #B3B3B3; font-size: 0.9em;">
-      <p>Music provided by YouTube</p>
-      <p style="margin-top: 10px;">
-        <%= link_to '利用規約', terms_path, style: 'color: #1DB954; text-decoration: none;' %> |
-        <%= link_to 'プライバシーポリシー', privacy_path, style: 'color: #1DB954; text-decoration: none;' %>
-      </p>
-    </footer>
   </main>
+
+  <footer class="player-footer">
+    <p class="youtube-credit">Music provided by YouTube</p>
+    <p class="footer-links">
+      <%= link_to '利用規約', terms_path %> |
+      <%= link_to 'プライバシーポリシー', privacy_path %>
+    </p>
+  </footer>
 </div>

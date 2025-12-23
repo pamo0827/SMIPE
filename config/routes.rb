@@ -31,6 +31,13 @@ Rails.application.routes.draw do
   post '/map/create_pin', to: 'maps#create_pin'
   get '/login', to: 'sessions#login', as: 'login'
 
+  # グローバルキュー関連
+  namespace :queue do
+    post 'add', to: 'music_queue#add'
+    get 'next', to: 'music_queue#next'
+    get 'status', to: 'music_queue#status'
+  end
+
   # modelsブランチのルート
   post 'save_playlist', to: 'player#save_playlist'
   post 'playlists/save', to: 'playlists#save'

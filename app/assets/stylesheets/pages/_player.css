@@ -40,8 +40,11 @@
 }
 
 .track-details {
-  margin-top: 20px;
+  margin-top: 15px;
+  margin-bottom: 15px;
   text-align: center;
+  width: 100%;
+  max-width: 350px;
 }
 
 .song-title {
@@ -185,6 +188,39 @@
   }
 }
 
+/* Footer styles */
+.player-footer {
+  background-color: #181818;
+  border-top: 1px solid #282828;
+  padding: 30px 20px;
+  text-align: center;
+  margin-top: auto;
+  width: 100%;
+}
+
+.youtube-credit {
+  color: #B3B3B3;
+  font-size: 0.9em;
+  margin: 0 0 10px 0;
+}
+
+.footer-links {
+  color: #B3B3B3;
+  font-size: 0.9em;
+  margin: 0;
+}
+
+.footer-links a {
+  color: #1DB954;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #1ed760;
+  text-decoration: underline;
+}
+
 @media (max-width: 480px) {
   .player-container {
     padding-top: 60px;
@@ -215,5 +251,8 @@
   }
   .up-next-item {
     min-width: 180px;
+  }
+  .player-footer {
+    padding: 20px 15px;
   }
 }
