@@ -1,0 +1,43 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <h1 class="auth-title">SMIPEに登録</h1>
+
+    <% if @user.errors.any? %>
+      <div class="auth-error">
+        <% @user.errors.full_messages.each do |message| %>
+          <p><%= message %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%= form_with model: @user, url: signup_path, local: true, class: "auth-form" do |f| %>
+      <div class="auth-field">
+        <%= f.label :name, "名前", class: "auth-label" %>
+        <%= f.text_field :name, class: "auth-input", placeholder: "名前", autofocus: true %>
+      </div>
+
+      <div class="auth-field">
+        <%= f.label :email, "メールアドレス", class: "auth-label" %>
+        <%= f.email_field :email, class: "auth-input", placeholder: "メールアドレス" %>
+      </div>
+
+      <div class="auth-field">
+        <%= f.label :password, "パスワード", class: "auth-label" %>
+        <%= f.password_field :password, class: "auth-input", placeholder: "6文字以上" %>
+      </div>
+
+      <div class="auth-field">
+        <%= f.label :password_confirmation, "パスワード（確認）", class: "auth-label" %>
+        <%= f.password_field :password_confirmation, class: "auth-input", placeholder: "パスワード（確認）" %>
+      </div>
+
+      <%= f.submit "登録する", class: "auth-submit-btn" %>
+    <% end %>
+
+    <div class="auth-divider">
+      <span>すでにアカウントをお持ちですか？</span>
+    </div>
+
+    <%= link_to "ログインする", login_path, class: "auth-secondary-btn" %>
+  </div>
+</div>

@@ -111,6 +111,7 @@
   border-radius: 50%;
   background: #1DB954;
   cursor: pointer;
+  margin-top: -4px;
 }
 
 .progress-bar::-moz-range-thumb {

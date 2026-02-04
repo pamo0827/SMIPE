@@ -1,5 +1,5 @@
 <header class="header">
-  <% unless current_page?(login_path) %>
+  <% unless current_page?(login_path) || current_page?(signup_path) %>
     <div class="header-inner-container">
       <!-- 左側：ロゴ -->
       <div class="header-left">
@@ -44,18 +44,13 @@
       <!-- 右側：ユーザーセッションコントロール -->
       <div class="header-right">
         <% if logged_in? %>
-          <% if current_user.try(:spotify_image_url).present? %>
-            <button class="header-user-btn">
-              <img src="<%= current_user.spotify_image_url %>" alt="ユーザーアイコン" class="header-user-avatar" />
-            </button>
-          <% else %>
-            <button class="header-user-btn">
-              <span class="header-user-initial"><%= current_user.try(:name)&.first || "U" %></span>
-            </button>
-          <% end %>
-          <%= link_to "Logout", logout_path, data: { turbo_method: :delete }, class: "header-logout-link" %>
+          <button class="header-user-btn">
+            <span class="header-user-initial"><%= current_user.name&.first&.upcase || "U" %></span>
+          </button>
+          <%= link_to "ログアウト", logout_path, data: { turbo_method: :delete }, class: "header-logout-link" %>
         <% else %>
-          <%= button_to 'Googleでログイン', '/auth/google_oauth2', method: :post, class: 'header-google-login-btn', params: { authenticity_token: form_authenticity_token }, data: { turbo: false } %>
+          <%= link_to '登録', signup_path, class: 'header-signup-link' %>
+          <%= link_to 'ログイン', login_path, class: 'header-login-btn' %>
         <% end %>
       </div>
     </div>

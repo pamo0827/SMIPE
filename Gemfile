@@ -1,9 +1,6 @@
 source "https://rubygems.org"
 
 gem "dotenv-rails"
-gem "omniauth"
-gem "omniauth-google-oauth2"
-gem "omniauth-rails_csrf_protection"
 gem "google-api-client"
 gem "redis"
 gem "geocoder"

@@ -1,5 +1,11 @@
 class User < ApplicationRecord
-  # has_secure_password
+  has_secure_password
+
+  # メール・パスワードのバリデーション
+  validates :email, presence: true, uniqueness: { case_sensitive: false },
+                    format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :password, length: { minimum: 6 }, on: :create
+  validates :name, presence: true
 
   # 位置情報関連のバリデーション
   validates :latitude, numericality: { 

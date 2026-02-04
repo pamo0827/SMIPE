@@ -9,12 +9,14 @@ Rails.application.routes.draw do
     end
   end
   
-  # OmniAuth routes
-  get '/auth/:provider/callback', to: 'sessions#create'
-  post '/auth/:provider/callback', to: 'sessions#create'
-  get '/auth/failure', to: 'sessions#failure'
-
+  # Authentication routes
+  get '/login', to: 'sessions#new', as: 'login'
+  post '/login', to: 'sessions#create'
   delete '/logout', to: 'sessions#destroy', as: 'logout'
+
+  # Registration routes
+  get '/signup', to: 'users#new', as: 'signup'
+  post '/signup', to: 'users#create'
 
   # YouTube API routes
   get '/youtube/search', to: 'youtube#search'
@@ -26,7 +28,6 @@ Rails.application.routes.draw do
   get '/terms', to: 'static_pages#terms', as: 'terms'
   get '/privacy', to: 'static_pages#privacy', as: 'privacy'
   get '/player', to: 'player#show', as: 'player_page'
-  get '/login', to: 'sessions#login', as: 'login'
 
   # グローバルキュー関連
   namespace :queue do
