@@ -20,6 +20,18 @@ class PlayerController < ApplicationController
     else
       @first_video = nil
     end
+
+    # 年代別おすすめ（APIコール削減のため一部のみ取得）
+    @era_sections = [
+      { era: "90s", label: "90年代の名曲", videos: youtube_service.search_by_era("90s", max_results: 8) },
+      { era: "2000s", label: "2000年代ヒット", videos: youtube_service.search_by_era("2000s", max_results: 8) }
+    ]
+
+    # アーティスト別おすすめ
+    @artist_sections = [
+      { artist: "YOASOBI", videos: youtube_service.search_by_artist("YOASOBI", max_results: 8) },
+      { artist: "Official髭男dism", videos: youtube_service.search_by_artist("Official髭男dism", max_results: 8) }
+    ]
   end
 
   # いいね（ログイン必須）
@@ -182,5 +194,67 @@ class PlayerController < ApplicationController
     unless logged_in?
       render json: { error: 'ログインが必要です' }, status: :unauthorized
     end
+  end
+
+  public
+
+  # セクション更新API
+  def refresh_section
+    youtube_service = YoutubeService.new
+    section_type = params[:section_type]
+    section_value = params[:section_value]
+
+    videos = case section_type
+             when 'trending'
+               youtube_service.trending_music_japan(max_results: 12)
+             when 'era'
+               youtube_service.search_by_era(section_value, max_results: 8)
+             when 'artist'
+               youtube_service.search_by_artist(section_value, max_results: 8)
+             else
+               []
+             end
+
+    render json: { videos: videos }
+  end
+
+  # いいね/NOT FOR ME履歴を取得
+  def interactions
+    unless logged_in?
+      render json: { likes: [], dislikes: [] }
+      return
+    end
+
+    youtube_service = YoutubeService.new
+
+    # いいね履歴を取得
+    likes = current_user.music_interactions.likes.recent.limit(20)
+    like_videos = likes.map do |interaction|
+      video = youtube_service.video_details(interaction.video_id)
+      next nil unless video
+      {
+        video_id: interaction.video_id,
+        title: video[:title],
+        channel_name: video[:channel_name],
+        thumbnail: video[:thumbnail],
+        created_at: interaction.created_at
+      }
+    end.compact
+
+    # NOT FOR ME履歴を取得
+    dislikes = current_user.music_interactions.dislikes.recent.limit(20)
+    dislike_videos = dislikes.map do |interaction|
+      video = youtube_service.video_details(interaction.video_id)
+      next nil unless video
+      {
+        video_id: interaction.video_id,
+        title: video[:title],
+        channel_name: video[:channel_name],
+        thumbnail: video[:thumbnail],
+        created_at: interaction.created_at
+      }
+    end.compact
+
+    render json: { likes: like_videos, dislikes: dislike_videos }
   end
 end

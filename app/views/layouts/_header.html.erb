@@ -24,7 +24,7 @@
           </svg>
         <% end %>
 
-        <div class="header-search-wrapper">
+        <div class="header-search-wrapper" data-controller="search">
           <div class="header-search-container">
             <button class="header-search-icon" aria-label="検索" tabindex="-1">
               <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
@@ -34,10 +34,13 @@
             <input type="search"
                    class="header-search-input"
                    placeholder="何を再生したいですか？"
-                   data-controller="search"
-                   data-action="input->search#onInput keydown->search#onKeydown"
-                   aria-label="何を再生したいですか？">
+                   data-search-target="input"
+                   data-action="input->search#onInput keydown->search#onKeydown focus->search#onFocus"
+                   aria-label="何を再生したいですか？"
+                   autocomplete="off">
           </div>
+          <!-- 検索結果ドロップダウン -->
+          <div class="search-results" data-search-target="results"></div>
         </div>
       </div>
 

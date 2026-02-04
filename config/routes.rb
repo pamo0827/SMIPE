@@ -55,4 +55,12 @@ Rails.application.routes.draw do
     end
   end
   post '/player/add_track_to_playlist', to: 'player#add_track_to_playlist'
+
+  # いいね/NOT FOR ME履歴
+  get '/player/interactions', to: 'player#interactions'
+  post '/player/like', to: 'player#like'
+  post '/player/dislike', to: 'player#dislike'
+
+  # セクション更新
+  get '/player/refresh_section', to: 'player#refresh_section'
 end

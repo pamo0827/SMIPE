@@ -3,7 +3,8 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["albumArt", "albumImage", "videoPlayer", "songTitle", "artistName",
                     "progressBar", "currentTime", "duration", "playPauseButton",
-                    "playIcon", "pauseIcon", "likeButton", "dislikeButton"]
+                    "playIcon", "pauseIcon", "likeButton", "dislikeButton",
+                    "lyricsSection", "youtubeLink"]
 
   static values = {
     videoIds: Array,
@@ -25,13 +26,97 @@ export default class extends Controller {
       this.videoIdsValue = JSON.parse(videoIdsData)
     }
 
+    // Listen for custom play-video events from history/sidebar
+    this.handlePlayVideoEvent = this.handlePlayVideoEvent.bind(this)
+    document.addEventListener('play-video', this.handlePlayVideoEvent)
+
     // Load YouTube iframe API
     this.loadYouTubeAPI()
   }
 
   disconnect() {
+    document.removeEventListener('play-video', this.handlePlayVideoEvent)
     if (this.player) {
       this.player.destroy()
+    }
+  }
+
+  handlePlayVideoEvent(event) {
+    const { videoId } = event.detail
+    console.log('Received play-video event:', videoId)
+    if (videoId) {
+      this.playVideoById(videoId)
+    }
+  }
+
+  playVideoById(videoId) {
+    console.log('playVideoById called:', videoId, 'player exists:', !!this.player)
+
+    // Add video to the beginning of the list if not already present
+    const index = this.videoIdsValue.indexOf(videoId)
+    if (index === -1) {
+      // 新しい配列を作成して代入（Stimulusの変更検出のため）
+      this.videoIdsValue = [videoId, ...this.videoIdsValue]
+      this.currentIndexValue = 0
+    } else {
+      this.currentIndexValue = index
+    }
+
+    // プレイヤーが初期化されていれば再生
+    if (this.player && this.player.loadVideoById) {
+      console.log('Loading and playing video:', videoId)
+      console.log('Player state before load:', this.player.getPlayerState?.())
+
+      // loadVideoByIdを使用（オブジェクト形式で渡す）
+      this.player.loadVideoById({
+        videoId: videoId,
+        startSeconds: 0
+      })
+
+      console.log('loadVideoById called with object')
+    } else {
+      console.log('Player not ready, storing videoId for later')
+      this.pendingVideoId = videoId
+    }
+
+    // UIを直接更新（videoIdを使って）
+    this.updatePlayerUIWithVideoId(videoId)
+  }
+
+  // 特定のvideoIdでUIを更新
+  async updatePlayerUIWithVideoId(videoId) {
+    if (!videoId) return
+
+    // YouTubeリンクを更新
+    this.updateYouTubeLink(videoId)
+
+    try {
+      const response = await fetch(`/youtube/video/${videoId}`)
+      const data = await response.json()
+
+      if (data.video) {
+        const video = data.video
+        console.log('Updating UI with video:', video.title)
+
+        if (this.hasSongTitleTarget) {
+          this.songTitleTarget.textContent = video.title
+        }
+        if (this.hasArtistNameTarget) {
+          this.artistNameTarget.textContent = video.channel_name
+        }
+        if (this.hasAlbumImageTarget) {
+          this.albumImageTarget.src = video.thumbnail
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch video details:', error)
+    }
+  }
+
+  // YouTubeリンクを更新
+  updateYouTubeLink(videoId) {
+    if (this.hasYoutubeLinkTarget && videoId) {
+      this.youtubeLinkTarget.href = `https://www.youtube.com/watch?v=${videoId}`
     }
   }
 
@@ -73,26 +158,67 @@ export default class extends Controller {
         'playsinline': 1,
         'controls': 0,
         'modestbranding': 1,
-        'rel': 0
+        'rel': 0,
+        'autoplay': 1,
+        'enablejsapi': 1
       },
       events: {
         'onReady': this.onPlayerReady.bind(this),
-        'onStateChange': this.onPlayerStateChange.bind(this)
+        'onStateChange': this.onPlayerStateChange.bind(this),
+        'onError': this.onPlayerError.bind(this)
       }
     })
   }
 
   onPlayerReady(event) {
     console.log('YouTube Player Ready')
+
+    // ペンディング中の動画があれば再生
+    if (this.pendingVideoId) {
+      console.log('Playing pending video:', this.pendingVideoId)
+      this.player.loadVideoById(this.pendingVideoId)
+      this.player.playVideo()
+      this.pendingVideoId = null
+    } else {
+      // Auto-play the first video
+      event.target.playVideo()
+    }
+
     this.updatePlayerUI()
-    // Auto-play the first video
-    event.target.playVideo()
+  }
+
+  onPlayerError(event) {
+    // Error codes: 2=invalid video id, 5=HTML5 error, 100=not found, 101/150=embedding disabled
+    console.error('YouTube Player Error:', event.data)
+    const errorMessages = {
+      2: '無効な動画IDです',
+      5: 'HTML5プレイヤーエラー',
+      100: '動画が見つかりません',
+      101: 'この動画は埋め込み再生が無効です',
+      150: 'この動画は埋め込み再生が無効です'
+    }
+    const message = errorMessages[event.data] || '再生エラーが発生しました'
+    console.error('Error message:', message)
+
+    // 埋め込み不可エラーの場合、次の候補を試すイベントを発火
+    if (event.data === 101 || event.data === 150) {
+      const currentVideoId = this.videoIdsValue[this.currentIndexValue]
+      console.log('Requesting next candidate for failed video:', currentVideoId)
+
+      // 検索コントローラーに次の候補を要求
+      const retryEvent = new CustomEvent('video-playback-failed', {
+        detail: { failedVideoId: currentVideoId },
+        bubbles: true
+      })
+      document.dispatchEvent(retryEvent)
+    } else {
+      this.showToast(message, 'error')
+    }
   }
 
   onPlayerStateChange(event) {
-    // YT.PlayerState.PLAYING = 1
-    // YT.PlayerState.PAUSED = 2
-    // YT.PlayerState.ENDED = 0
+    // YT.PlayerState: -1=unstarted, 0=ended, 1=playing, 2=paused, 3=buffering, 5=cued
+    console.log('Player state changed:', event.data)
 
     if (event.data === YT.PlayerState.PLAYING) {
       this.playingValue = true
@@ -251,8 +377,28 @@ export default class extends Controller {
       }, 1000)
     }
 
-    this.showToast('GOODに追加しました', 'success')
-    // TODO: Implement like API call when user is logged in
+    // API call to save like
+    try {
+      const response = await fetch('/player/like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': this.getMetaValue('csrf-token')
+        },
+        body: JSON.stringify({ video_id: videoId })
+      })
+
+      if (response.ok) {
+        this.showToast('GOODに追加しました', 'success')
+      } else if (response.status === 401) {
+        this.showToast('ログインが必要です', 'error')
+      } else {
+        this.showToast('保存に失敗しました', 'error')
+      }
+    } catch (error) {
+      console.error('Failed to save like:', error)
+      this.showToast('GOODに追加しました', 'success') // Show success even if offline
+    }
   }
 
   // NOT FOR ME - skip and record
@@ -260,16 +406,46 @@ export default class extends Controller {
     const videoId = this.videoIdsValue[this.currentIndexValue]
     console.log('Skip video (not for me):', videoId)
 
+    // API call to save dislike
+    try {
+      const response = await fetch('/player/dislike', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': this.getMetaValue('csrf-token')
+        },
+        body: JSON.stringify({ video_id: videoId })
+      })
+
+      if (response.ok) {
+        this.showToast('NOT FOR MEに追加しました', 'info')
+      } else if (response.status === 401) {
+        // Continue without saving if not logged in
+      }
+    } catch (error) {
+      console.error('Failed to save dislike:', error)
+    }
+
     // Move to next video
     this.handleNext()
-
-    // TODO: Implement skip/dislike API call when user is logged in
   }
 
   async dislikeVideo() {
     const videoId = this.videoIdsValue[this.currentIndexValue]
     console.log('Dislike video:', videoId)
-    // TODO: Implement dislike API call when user is logged in
+
+    try {
+      await fetch('/player/dislike', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': this.getMetaValue('csrf-token')
+        },
+        body: JSON.stringify({ video_id: videoId })
+      })
+    } catch (error) {
+      console.error('Failed to save dislike:', error)
+    }
   }
 
   // トースト通知を表示

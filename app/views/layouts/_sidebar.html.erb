@@ -1,26 +1,65 @@
 <aside class="sidebar" id="sidebar">
   <% unless current_page?(login_path) || current_page?(signup_path) %>
-    <!-- プレイリストセクション -->
-    <div class="sidebar-library">
-      <div class="sidebar-library-header">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-          <path d="M3 22a1 1 0 0 1-1-1V3a1 1 0 0 1 2 0v18a1 1 0 0 1-1 1zM15.5 2.134A1 1 0 0 0 14 3v18a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6.464a1 1 0 0 0-.5-.866l-6-3.464zM9 2a1 1 0 0 0-1 1v18a1 1 0 1 0 2 0V3a1 1 0 0 0-1-1z"/>
-        </svg>
-        <span>Your Library</span>
+    <div class="sidebar-sections">
+      <!-- Your Library セクション -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M3 22a1 1 0 0 1-1-1V3a1 1 0 0 1 2 0v18a1 1 0 0 1-1 1zM15.5 2.134A1 1 0 0 0 14 3v18a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6.464a1 1 0 0 0-.5-.866l-6-3.464zM9 2a1 1 0 0 0-1 1v18a1 1 0 1 0 2 0V3a1 1 0 0 0-1-1z"/>
+          </svg>
+          <span>Your Library</span>
+        </div>
+        <div class="sidebar-section-content">
+          <% if logged_in? %>
+            <div class="playlist-items" data-controller="sidebar-playlists">
+              <div class="loading-playlists">読み込み中...</div>
+            </div>
+          <% else %>
+            <div class="sidebar-login-prompt-small">
+              <p>ログインしてプレイリストを保存</p>
+              <%= link_to 'ログイン', login_path, class: 'sidebar-login-btn-small' %>
+            </div>
+          <% end %>
+        </div>
       </div>
 
-      <div class="sidebar-playlists" id="sidebarPlaylists">
-        <% if logged_in? %>
-          <div class="playlist-items" data-controller="sidebar-playlists">
-            <div class="loading-playlists">読み込み中...</div>
-          </div>
-        <% else %>
-          <div class="sidebar-login-prompt">
-            <p>プレイリストを作成</p>
-            <p class="sidebar-login-subtitle">ログインしてプレイリストを保存しましょう</p>
-            <%= link_to 'ログイン', login_path, class: 'sidebar-login-btn' %>
-          </div>
-        <% end %>
+      <!-- History セクション -->
+      <div class="sidebar-section" data-controller="sidebar-history">
+        <div class="sidebar-section-header">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M13.5 8H12v5l4.28 2.54.72-1.21-3.5-2.08V8M13 3a9 9 0 0 0-9 9H1l3.96 4.03L9 12H6a7 7 0 0 1 7-7 7 7 0 0 1 7 7 7 7 0 0 1-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.896 8.896 0 0 0 13 21a9 9 0 0 0 9-9 9 9 0 0 0-9-9"/>
+          </svg>
+          <span>History</span>
+        </div>
+
+        <!-- GOOD / NOT FOR ME タブ -->
+        <div class="sidebar-history-tabs">
+          <button class="history-tab active" data-sidebar-history-target="historyTab" data-history-type="likes" data-action="click->sidebar-history#switchHistoryTab">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            <span>GOOD</span>
+          </button>
+          <button class="history-tab" data-sidebar-history-target="historyTab" data-history-type="dislikes" data-action="click->sidebar-history#switchHistoryTab">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/>
+            </svg>
+            <span>NOT FOR ME</span>
+          </button>
+        </div>
+
+        <div class="sidebar-section-content">
+          <% if logged_in? %>
+            <div class="history-items" data-sidebar-history-target="historyItems">
+              <div class="loading-playlists">読み込み中...</div>
+            </div>
+          <% else %>
+            <div class="sidebar-login-prompt-small">
+              <p>ログインして履歴を確認</p>
+              <%= link_to 'ログイン', login_path, class: 'sidebar-login-btn-small' %>
+            </div>
+          <% end %>
+        </div>
       </div>
     </div>
   <% end %>
