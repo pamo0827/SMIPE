@@ -1,0 +1,168 @@
+/* おすすめセクション */
+.recommendations-section {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.recommendations-header {
+  margin-bottom: 16px;
+}
+
+.recommendations-header h2 {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* カードグリッド */
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+}
+
+/* カード */
+.recommendation-card {
+  background-color: #181818;
+  border-radius: 8px;
+  padding: 16px;
+  transition: background-color 0.3s;
+  cursor: pointer;
+}
+
+.recommendation-card:hover {
+  background-color: #282828;
+}
+
+.recommendation-card:hover .recommendation-play-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* カード画像コンテナ */
+.recommendation-card-image {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.recommendation-card-image img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* 再生ボタン */
+.recommendation-play-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #1ed760;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.3s, transform 0.3s, background-color 0.2s;
+  box-shadow: 0 8px 8px rgba(0, 0, 0, 0.3);
+}
+
+.recommendation-play-btn:hover {
+  transform: translateY(0) scale(1.04);
+  background-color: #1fdf64;
+}
+
+.recommendation-play-btn svg {
+  color: #000;
+  margin-left: 2px;
+}
+
+/* カード情報 */
+.recommendation-card-info {
+  min-height: 62px;
+}
+
+.recommendation-title {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.recommendation-artist {
+  color: #a7a7a7;
+  font-size: 14px;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+  .recommendations-section {
+    padding: 16px;
+  }
+
+  .recommendations-header h2 {
+    font-size: 20px;
+  }
+
+  .recommendations-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+  }
+
+  .recommendation-card {
+    padding: 12px;
+  }
+
+  .recommendation-play-btn {
+    width: 40px;
+    height: 40px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .recommendation-play-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .recommendation-title {
+    font-size: 14px;
+  }
+
+  .recommendation-artist {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .recommendations-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .recommendation-card {
+    padding: 8px;
+  }
+
+  .recommendation-card-image {
+    margin-bottom: 8px;
+  }
+}

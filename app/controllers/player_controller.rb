@@ -4,11 +4,14 @@ class PlayerController < ApplicationController
   def show
     youtube_service = YoutubeService.new
 
+    # トレンド動画を取得（おすすめ表示用）
+    @trending_videos = youtube_service.trending_music_japan(max_results: 20)
+
     # 動画IDsを取得（トレンド音楽または近くの音楽）
     @video_ids = if has_location_permission?
-                   fetch_nearby_music || fetch_trending_music(youtube_service)
+                   fetch_nearby_music || @trending_videos.map { |v| v[:video_id] }
                  else
-                   fetch_trending_music(youtube_service)
+                   @trending_videos.map { |v| v[:video_id] }
                  end
 
     # 最初の動画の詳細を取得

@@ -18,19 +18,12 @@ export default class extends Controller {
     this.currentIndexValue = 0
     this.playingValue = false
     this.player = null
-    this.touchStartX = 0
-    this.touchStartY = 0
-    this.isDragging = false
-    this.dragDirection = null
 
     // Load video IDs from data attribute
     const videoIdsData = this.element.dataset.youtubePlayerVideoIds
     if (videoIdsData) {
       this.videoIdsValue = JSON.parse(videoIdsData)
     }
-
-    // Setup touch events for swipe gestures
-    this.setupTouchEvents()
 
     // Load YouTube iframe API
     this.loadYouTubeAPI()
@@ -228,6 +221,15 @@ export default class extends Controller {
     this.updatePlayerUI()
   }
 
+  // おすすめカードから呼び出される
+  loadAndPlayVideo(videoId) {
+    if (!this.player) return
+
+    this.player.loadVideoById(videoId)
+    this.player.playVideo()
+    this.updatePlayerUI()
+  }
+
   handleSeek(event) {
     if (!this.player) return
 
@@ -237,253 +239,37 @@ export default class extends Controller {
     this.player.seekTo(seekTime, true)
   }
 
-  // Swipe gesture handling (keep existing logic from player_controller.js)
-  setupTouchEvents() {
-    const albumArt = this.albumArtTarget
-    const albumImage = this.albumImageTarget
-
-    if (!albumArt || !albumImage) {
-      console.error('Album art or image target not found')
-      return
-    }
-
-    // Touch events
-    albumArt.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false })
-    albumArt.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false })
-    albumArt.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: false })
-
-    // Mouse events (for desktop)
-    albumArt.addEventListener('mousedown', this.handleMouseDown.bind(this))
-    albumArt.addEventListener('mousemove', this.handleMouseMove.bind(this))
-    albumArt.addEventListener('mouseup', this.handleMouseUp.bind(this))
-    albumArt.addEventListener('mouseleave', this.handleMouseUp.bind(this))
-
-    // Hover effects
-    albumArt.addEventListener('mouseenter', this.handleMouseEnter.bind(this))
-    albumArt.addEventListener('mouseleave', this.handleMouseLeave.bind(this))
-  }
-
-  handleMouseEnter() {
-    this.albumImageTarget.style.transform = 'scale(1.02)'
-    this.albumImageTarget.style.transition = 'transform 0.3s ease'
-  }
-
-  handleMouseLeave() {
-    this.albumImageTarget.style.transform = 'scale(1)'
-    this.albumImageTarget.style.transition = 'transform 0.3s ease'
-  }
-
-  handleTouchStart(e) {
-    e.preventDefault()
-    this.touchStartX = e.touches[0].clientX
-    this.touchStartY = e.touches[0].clientY
-    this.isDragging = true
-    this.dragDirection = null
-    this.albumImageTarget.style.transition = 'none'
-    this.albumImageTarget.style.cursor = 'grabbing'
-  }
-
-  handleMouseDown(e) {
-    this.touchStartX = e.clientX
-    this.touchStartY = e.clientY
-    this.isDragging = true
-    this.dragDirection = null
-    this.albumImageTarget.style.transition = 'none'
-    this.albumImageTarget.style.cursor = 'grabbing'
-  }
-
-  handleTouchMove(e) {
-    if (!this.isDragging) return
-    e.preventDefault()
-
-    const touchX = e.touches[0].clientX
-    const touchY = e.touches[0].clientY
-    this.updateDragPosition(touchX, touchY)
-  }
-
-  handleMouseMove(e) {
-    if (!this.isDragging) return
-    this.updateDragPosition(e.clientX, e.clientY)
-  }
-
-  updateDragPosition(x, y) {
-    const diffX = x - this.touchStartX
-    const diffY = y - this.touchStartY
-
-    // Determine drag direction
-    if (!this.dragDirection && (Math.abs(diffX) > 10 || Math.abs(diffY) > 10)) {
-      this.dragDirection = Math.abs(diffX) > Math.abs(diffY) ? 'horizontal' : 'vertical'
-    }
-
-    // Restrict movement based on drag direction
-    let translateX = 0
-    let translateY = 0
-    let rotation = 0
-
-    if (this.dragDirection === 'horizontal') {
-      translateX = diffX
-      rotation = diffX * 0.1
-    } else if (this.dragDirection === 'vertical') {
-      translateY = diffY
-    }
-
-    // Visual feedback during drag
-    const scale = 1 - Math.min(Math.abs(diffX), Math.abs(diffY)) / 1000
-    this.albumImageTarget.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${rotation}deg) scale(${scale})`
-    this.albumImageTarget.style.opacity = 1 - Math.min(Math.abs(diffX), Math.abs(diffY)) / 300
-  }
-
-  handleTouchEnd(e) {
-    if (!this.isDragging) return
-    this.handleDragEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY)
-  }
-
-  handleMouseUp(e) {
-    if (!this.isDragging) return
-    this.handleDragEnd(e.clientX, e.clientY)
-  }
-
-  handleDragEnd(x, y) {
-    const diffX = x - this.touchStartX
-    const diffY = y - this.touchStartY
-    const minSwipeDistance = 100
-
-    // Reset if no significant swipe
-    if (Math.abs(diffX) <= minSwipeDistance && Math.abs(diffY) <= minSwipeDistance) {
-      this.albumImageTarget.style.transition = 'transform 0.3s ease, opacity 0.3s ease'
-      this.albumImageTarget.style.transform = ''
-      this.albumImageTarget.style.opacity = ''
-      this.albumImageTarget.style.cursor = 'grab'
-    } else {
-      const dominantDirection = this.getDominantDirection(diffX, diffY)
-      this.applyDragEndAnimation(dominantDirection)
-
-      switch (dominantDirection) {
-        case 'right':
-          this.handleSwipeRight()
-          break
-        case 'left':
-          this.handleSwipeLeft()
-          break
-        case 'down':
-          this.handleSwipeDown()
-          break
-        case 'up':
-          this.handleSwipeUp()
-          break
-      }
-    }
-
-    this.isDragging = false
-    this.dragDirection = null
-  }
-
-  getDominantDirection(diffX, diffY) {
-    const absX = Math.abs(diffX)
-    const absY = Math.abs(diffY)
-
-    if (absX > absY) {
-      return diffX > 0 ? 'right' : 'left'
-    } else {
-      return diffY > 0 ? 'down' : 'up'
-    }
-  }
-
-  applyDragEndAnimation(direction) {
-    const albumImage = this.albumImageTarget
-    albumImage.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out'
-    albumImage.style.opacity = 0
-
-    let transformValue = ''
-    switch (direction) {
-      case 'left':
-        transformValue = 'translateX(-100%) rotate(-10deg) scale(0.8)'
-        break
-      case 'right':
-        transformValue = 'translateX(100%) rotate(10deg) scale(0.8)'
-        break
-      case 'up':
-        transformValue = 'translateY(-100%) scale(0.8)'
-        break
-      case 'down':
-        transformValue = 'translateY(100%) scale(0.8)'
-        break
-    }
-    albumImage.style.transform = transformValue
-
-    // Reset after animation
-    setTimeout(() => {
-      albumImage.style.transition = 'none'
-      albumImage.style.transform = ''
-      albumImage.style.opacity = ''
-      albumImage.style.cursor = 'grab'
-    }, 300)
-  }
-
-  // Swipe action handlers
-  handleSwipeRight() {
-    // Like the current video
-    this.likeVideo()
-  }
-
-  handleSwipeLeft() {
-    // Dislike the current video
-    this.dislikeVideo()
-  }
-
-  handleSwipeUp() {
-    // 曲をキューに投稿
-    this.postToQueue()
-  }
-
-  handleSwipeDown() {
-    // Previous track
-    this.handlePrevious()
-  }
-
   async likeVideo() {
     const videoId = this.videoIdsValue[this.currentIndexValue]
     console.log('Like video:', videoId)
+
+    // Visual feedback
+    if (this.hasLikeButtonTarget) {
+      this.likeButtonTarget.classList.add('active')
+      setTimeout(() => {
+        this.likeButtonTarget.classList.remove('active')
+      }, 1000)
+    }
+
+    this.showToast('GOODに追加しました', 'success')
     // TODO: Implement like API call when user is logged in
+  }
+
+  // NOT FOR ME - skip and record
+  async skipVideo() {
+    const videoId = this.videoIdsValue[this.currentIndexValue]
+    console.log('Skip video (not for me):', videoId)
+
+    // Move to next video
+    this.handleNext()
+
+    // TODO: Implement skip/dislike API call when user is logged in
   }
 
   async dislikeVideo() {
     const videoId = this.videoIdsValue[this.currentIndexValue]
     console.log('Dislike video:', videoId)
     // TODO: Implement dislike API call when user is logged in
-  }
-
-  // 曲をキューに投稿
-  async postToQueue() {
-    const videoId = this.videoIdsValue[this.currentIndexValue]
-
-    if (!videoId) {
-      console.error('No video ID to post')
-      return
-    }
-
-    try {
-      const response = await fetch('/queue/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': this.getMetaValue('csrf-token')
-        },
-        body: JSON.stringify({ video_id: videoId })
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        this.showToast(`キューに追加しました！（順番: ${data.queue_position}）`, 'success')
-        this.handleNext() // 次の曲へ
-      } else {
-        this.showToast(data.error || 'キューへの追加に失敗しました', 'error')
-      }
-    } catch (error) {
-      console.error('Queue add error:', error)
-      this.showToast('通信エラーが発生しました', 'error')
-    }
   }
 
   // トースト通知を表示

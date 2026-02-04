@@ -14,37 +14,17 @@
       <% else %>
         <%= image_tag "image.png", alt: "Video Thumbnail", class: "album-image", data: { youtube_player_target: "albumImage", action: "click->youtube-player#togglePlay" } %>
       <% end %>
-
-      <!-- スワイプインジケーター -->
-      <div class="swipe-indicator right">
-        <i class="fas fa-heart"></i>
-      </div>
-
-      <div class="swipe-indicator left">
-        <i class="fas fa-heart-broken"></i>
-      </div>
-
-      <div class="swipe-indicator up">
-        <i class="fas fa-chevron-up"></i>
-      </div>
-
-      <div class="swipe-indicator down">
-        <i class="fas fa-chevron-down"></i>
-      </div>
-
-      <!-- スワイプ中の視覚的フィードバック -->
-      <div class="swiping"></div>
     </div>
 
-    <!-- トラック詳細を画像の下に移動 -->
+    <!-- トラック詳細 -->
     <div class="track-details">
       <p class="song-title" data-youtube-player-target="songTitle"><%= @first_video&.[](:title) || 'No Video' %></p>
       <p class="artist-name" data-youtube-player-target="artistName"><%= @first_video&.[](:channel_name) || 'Unknown Channel' %></p>
     </div>
 
     <!-- 再生バー（シークバー） -->
-    <div class="player-progress-bar" data-youtube-player-target="progressBarContainer" style="width: 300px; margin-top: -20px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-      <span class="progress-time" data-youtube-player-target="currentTime" style="font-size: 0.9em; color: #B3B3B3; min-width: 40px;">0:00</span>
+    <div class="player-progress-bar" data-youtube-player-target="progressBarContainer">
+      <span class="progress-time" data-youtube-player-target="currentTime">0:00</span>
       <input type="range"
              data-youtube-player-target="progressBar"
              data-action="input->youtube-player#handleSeek"
@@ -52,66 +32,79 @@
              min="0"
              max="100"
              value="0"
-             step="1"
-             style="flex: 1; accent-color: #1DB954; height: 4px; border-radius: 2px;">
-      <span class="progress-time" data-youtube-player-target="duration" style="font-size: 0.9em; color: #B3B3B3; min-width: 40px;">0:00</span>
+             step="1">
+      <span class="progress-time" data-youtube-player-target="duration">0:00</span>
     </div>
 
-    <div class="player-actions">
-      <% if logged_in? %>
-        <!-- いいねボタン（ログイン時のみ表示） -->
-        <button class="action-button like-button" data-youtube-player-target="likeButton" data-action="click->youtube-player#likeVideo">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
-          <span>Like</span>
-        </button>
-      <% end %>
-
-      <button class="action-button prev-button" data-action="click->youtube-player#handlePrevious">
+    <!-- 再生コントロール -->
+    <div class="player-controls">
+      <button class="control-button" data-action="click->youtube-player#handlePrevious" aria-label="前の曲">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <path d="M6 18V6h2v12H6zm3.5-6l8.5 6V6l-8.5 6z"/>
         </svg>
-        <span>Prev</span>
       </button>
 
-      <button class="action-button play-button center"
+      <button class="control-button play-pause"
               data-action="click->youtube-player#togglePlay"
-              data-youtube-player-target="playPauseButton">
+              data-youtube-player-target="playPauseButton"
+              aria-label="再生/一時停止">
         <svg data-youtube-player-target="playIcon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <path d="M8 5v14l11-7z"/>
         </svg>
         <svg data-youtube-player-target="pauseIcon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
           <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
         </svg>
-        <span>PLAY</span>
       </button>
 
-      <button class="action-button skip-button" data-action="click->youtube-player#handleNext">
+      <button class="control-button" data-action="click->youtube-player#handleNext" aria-label="次の曲">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
         </svg>
-        <span>Skip</span>
       </button>
-
-      <% if logged_in? %>
-        <!-- 嫌いボタン（ログイン時のみ表示） -->
-        <button class="action-button dislike-button" data-youtube-player-target="dislikeButton" data-action="click->youtube-player#dislikeVideo">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2.65l1.45 1.32C18.6 8.64 22 11.72 22 15.5 22 18.58 19.58 21 16.5 21c-1.74 0-3.41-.81-4.5-2.09C10.91 20.19 9.24 21 7.5 21 4.42 21 2 18.58 2 15.5c0-3.78 3.4-6.86 8.55-11.54L12 2.65z"/>
-          </svg>
-          <span>Dislike</span>
-        </button>
-      <% end %>
     </div>
 
-    <% unless logged_in? %>
-      <div class="login-prompt" style="text-align: center; margin-top: 20px; padding: 15px; background-color: rgba(255,255,255,0.1); border-radius: 8px;">
-        <p style="margin-bottom: 10px; color: #B3B3B3;">地図に音楽を投稿するにはログインが必要です</p>
-        <%= button_to 'Googleでログイン', '/auth/google_oauth2', method: :post, class: 'btn-secondary', params: { authenticity_token: form_authenticity_token }, data: { turbo: false } %>
-      </div>
-    <% end %>
+    <!-- フィードバックボタン -->
+    <div class="player-feedback">
+      <button class="feedback-button good" data-action="click->youtube-player#likeVideo" data-youtube-player-target="likeButton">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span>GOOD</span>
+      </button>
+
+      <button class="feedback-button not-for-me" data-action="click->youtube-player#skipVideo" data-youtube-player-target="skipButton">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/>
+        </svg>
+        <span>NOT FOR ME</span>
+      </button>
+    </div>
   </main>
+
+  <!-- おすすめセクション -->
+  <section class="recommendations-section">
+    <div class="recommendations-header">
+      <h2>あなたへのおすすめ</h2>
+    </div>
+    <div class="recommendations-grid" data-controller="recommendations">
+      <% @trending_videos&.first(8)&.each_with_index do |video, index| %>
+        <div class="recommendation-card" data-video-id="<%= video[:video_id] %>" data-index="<%= index %>">
+          <div class="recommendation-card-image">
+            <img src="<%= video[:thumbnail] %>" alt="<%= video[:title] %>" loading="lazy">
+            <button class="recommendation-play-btn" data-action="click->recommendations#playVideo" data-video-id="<%= video[:video_id] %>" data-index="<%= index %>">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="m7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606"/>
+              </svg>
+            </button>
+          </div>
+          <div class="recommendation-card-info">
+            <p class="recommendation-title"><%= truncate(video[:title], length: 40) %></p>
+            <p class="recommendation-artist"><%= video[:channel_name] %></p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </section>
 
   <footer class="player-footer">
     <p class="youtube-credit">Music provided by YouTube</p>

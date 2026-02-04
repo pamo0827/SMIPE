@@ -2,7 +2,7 @@ Rails.application.routes.draw do
   # Chrome DevToolsの不要なリクエストを無視する
   get '/.well-known/appspecific/com.chrome.devtools.json', to: ->(env) { [204, {}, []] }
 
-  root 'static_pages#home'
+  root 'player#show'
   resources :locations, only: [:show, :update] do
     collection do
       get :reverse_geocode
