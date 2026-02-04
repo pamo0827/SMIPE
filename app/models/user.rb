@@ -1,5 +1,11 @@
 class User < ApplicationRecord
-  # has_secure_password
+  has_secure_password
+
+  # メール・パスワードのバリデーション
+  validates :email, presence: true, uniqueness: { case_sensitive: false },
+                    format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :password, length: { minimum: 6 }, on: :create
+  validates :name, presence: true
 
   # 位置情報関連のバリデーション
   validates :latitude, numericality: { 
@@ -47,35 +53,24 @@ class User < ApplicationRecord
     last_location_update < hours.hours.ago
   end
 
-  # プレイリスト関連
-  has_many :playlist_locations, dependent: :destroy
+  # 音楽ピン関連
+  has_many :music_pins, dependent: :destroy
+  has_many :music_interactions, dependent: :destroy
+  has_many :posted_queue_items, class_name: 'MusicQueueItem', foreign_key: 'posted_by_id', dependent: :destroy
+  has_many :received_queue_items, class_name: 'MusicQueueItem', foreign_key: 'received_by_id', dependent: :nullify
 
-  # Spotify画像用
-  def spotify_image_url
+  # プロフィール画像URL
+  def profile_image_url
     image.presence
   end
 
-  # RSpotify用のメソッド
-  def to_rspotify_user
-    RSpotify::User.new({
-      'id' => self.uid,
-      'credentials' => {
-        'token' => self.access_token,
-        'refresh_token' => self.refresh_token,
-        'expires_at' => self.expires_at.to_i
-      }
-    })
+  # いいねした動画
+  def liked_videos
+    music_interactions.likes.pluck(:video_id)
   end
 
-  def refresh_token_if_expired!
-    return unless self.expires_at.present? && self.expires_at < Time.now
-
-    spotify_user = self.to_rspotify_user
-    new_credentials = spotify_user.credentials.refresh!
-    
-    self.update!(
-      access_token: new_credentials['token'],
-      expires_at: Time.at(new_credentials['expires_at'])
-    )
+  # 再生履歴
+  def play_history
+    music_interactions.plays.recent.limit(50)
   end
 end

@@ -1,280 +1,205 @@
 <div class="player-container">
-  <main class="player-content" data-controller="player" data-player-playing-value="false"
-    data-player-token="<%= @access_token %>"
-    data-player-track-uris="<%= @all_track_uris.to_json %>"
-    data-player-selected-playlist-id="<%= @selected_playlist_id %>"
-    data-action="swipeRight->player#handleSwipeRight
-                 swipeLeft->player#handleSwipeLeft
-                 swipeUp->player#handleSwipeUp
-                 swipeDown->player#handleSwipeDown">
-    <div class="album-art-section" id="album-art-section" data-player-target="albumArt">
-      <% if @first_track && @first_track.album && @first_track.album.images.any? %>
-        <%= image_tag @first_track.album.images.first['url'], alt: "Album Art", class: "album-image", data: { player_target: "albumImage", action: "click->player#togglePlay" } %>
+  <main class="player-content"
+    data-controller="youtube-player"
+    data-youtube-player-video-ids="<%= @video_ids.to_json %>"
+    data-youtube-player-current-index-value="0"
+    data-youtube-player-playing-value="false">
+
+    <!-- YouTube Player (hidden) -->
+    <div id="youtube-player" data-youtube-player-target="videoPlayer" style="display: none;"></div>
+
+    <div class="album-art-section" id="album-art-section" data-youtube-player-target="albumArt">
+      <% if @first_video && @first_video[:thumbnail] %>
+        <%= image_tag @first_video[:thumbnail], alt: "Video Thumbnail", class: "album-image", data: { youtube_player_target: "albumImage", action: "click->youtube-player#togglePlay" } %>
       <% else %>
-        <%= image_tag "image.png", alt: "Album Art", class: "album-image", data: { player_target: "albumImage", action: "click->player#togglePlay" } %>
+        <%= image_tag "image.png", alt: "Video Thumbnail", class: "album-image", data: { youtube_player_target: "albumImage", action: "click->youtube-player#togglePlay" } %>
       <% end %>
+    </div>
 
-      <!-- スワイプインジケーター -->
-      <div class="swipe-indicator right">
-        <i class="fas fa-heart"></i>
-      </div>
-
-      <div class="swipe-indicator left">
-        <i class="fas fa-times"></i>
-      </div>
-      <div class="swipe-indicator up">
-        <i class="fas fa-chevron-up"></i>
-      </div>
-      <div class="swipe-indicator down">
-        <i class="fas fa-chevron-down"></i>
-      </div>
-      
-      <!-- スワイプ中の視覚的フィードバック -->
-      <div class="swiping"></div>
-
+    <div class="player-info-controls">
+      <!-- トラック詳細 -->
       <div class="track-details">
-        <p class="song-title" data-player-target="songTitle"><%= @first_track&.name || 'No Track' %></p>
-        <p class="artist-name" data-player-target="artistName"><%= @first_track&.artists&.map(&:name)&.join(', ') || 'Unknown Artist' %></p>
+        <p class="song-title" data-youtube-player-target="songTitle"><%= @first_video&.[](:title) || 'No Video' %></p>
+        <p class="artist-name" data-youtube-player-target="artistName"><%= @first_video&.[](:channel_name) || 'Unknown Channel' %></p>
       </div>
-    </div>
 
-    <!-- 再生バー（シークバー） -->
-    <div class="player-progress-bar" data-player-target="progressBarContainer" style="width: 300px; margin-top: -20px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-      <span class="progress-time" id="current-time" style="font-size: 0.9em; color: #B3B3B3; min-width: 40px;">0:00</span>
-      <input type="range" id="progress-bar" class="progress-bar" min="0" max="100" value="0" step="1" style="flex: 1; accent-color: #1DB954; height: 4px; border-radius: 2px;">
-      <span class="progress-time" id="duration" style="font-size: 0.9em; color: #B3B3B3; min-width: 40px;">0:00</span>
-    </div>
-
-    <div class="player-actions">
-      <button class="action-button delete-button" id="delete-button" data-player-target="deleteButton" data-action="click->player#handleDelete">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M9 3v1H4v2h1v13c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V6h1V4h-5V3H9zm0 5h2v9H9V8zm4 0h2v9h-2V8z"/>
-        </svg>
-        <span>Delete</span>
-      </button>
-      <button class="action-button prev-button" id="prev-button" data-action="click->player#handleSwipeDown">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M6 18V6h2v12H6zm3.5-6l8.5 6V6l-8.5 6z"/>
-        </svg>
-        <span>Prev</span>
-      </button>
-      <button id="play-pause-btn" class="action-button play-button center" data-action="click->player#togglePlay" data-player-target="playPauseButton" disabled>
-        <svg id="play-icon" data-player-target="playIcon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
-        <svg id="pause-icon" data-player-target="pauseIcon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-        </svg>
-        <span data-player-target="playLabel">PLAY</span>
-      </button>
-      <button class="action-button skip-button" id="skip-button" data-player-target="skipButton" data-action="click->player#handleSkip">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
-        </svg>
-        <span>Skip</span>
-      </button>
-      <!-- プラスボタン（右スワイプと同じ動作） -->
-      <button class="action-button plus-button" id="plus-button" data-action="click->player#handleSwipeRight">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-        </svg>
-        <span>Plus</span>
-      </button>
-    </div>
-
-    <!-- <div class="player-actions-bottom">（SHUFFLE・REPEATボタン削除のため不要）</div> -->
-
-    <div class="playlist-selection">
-      <button id="toggle-playlist-selection" class="playlist-selection-button" data-player-target="togglePlaylistSelectionButton" data-action="click->player#togglePlaylistSelection">
-        <i class="fas fa-list"></i> プレイリストの変更
-      </button>
-      <div id="playlist-selection-panel" class="playlist-selection-panel" style="display: none;" data-player-target="playlistSelectionPanel">
-        <h4>プレイリストを選択</h4>
-        <div class="playlist-list" data-player-target="selectedPlaylistRadios" data-action="change->player#handlePlaylistSelectionChange">
-          <% @playlists.each do |playlist| %>
-            <div class="playlist-option">
-              <input type="radio" 
-                     name="selected_playlist" 
-                     id="playlist_<%= playlist.id %>" 
-                     value="<%= playlist.id %>"
-                     data-playlist-name="<%= playlist.name %>"
-                     <%= playlist.id == @selected_playlist_id ? 'checked' : '' %>>
-              <label for="playlist_<%= playlist.id %>">
-                <%= playlist.name %>
-                <span class="track-count">(<%= playlist.tracks.count %>曲)</span>
-              </label>
-            </div>
-          <% end %>
-        </div>
+      <!-- 再生バー（シークバー） -->
+      <div class="player-progress-bar" data-youtube-player-target="progressBarContainer">
+        <span class="progress-time" data-youtube-player-target="currentTime">0:00</span>
+        <input type="range"
+               data-youtube-player-target="progressBar"
+               data-action="input->youtube-player#handleSeek"
+               class="progress-bar"
+               min="0"
+               max="100"
+               value="0"
+               step="1">
+        <span class="progress-time" data-youtube-player-target="duration">0:00</span>
       </div>
-    </div>
-    
-    <section class="up-next">
-      <h3>Up Next</h3>
-      <div class="up-next-items" id="up-next-items" data-player-target="upNextItems">
-        <!-- Up Next items will be inserted here dynamically -->
+
+      <!-- 再生コントロール -->
+      <div class="player-controls">
+        <button class="control-button" data-action="click->youtube-player#handlePrevious" aria-label="前の曲">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 18V6h2v12H6zm3.5-6l8.5 6V6l-8.5 6z"/>
+          </svg>
+        </button>
+
+        <button class="control-button play-pause"
+                data-action="click->youtube-player#togglePlay"
+                data-youtube-player-target="playPauseButton"
+                aria-label="再生/一時停止">
+          <svg data-youtube-player-target="playIcon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <svg data-youtube-player-target="pauseIcon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+          </svg>
+        </button>
+
+        <button class="control-button" data-action="click->youtube-player#handleNext" aria-label="次の曲">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+          </svg>
+        </button>
       </div>
-    </section>
-    
-    <!-- プレイリスト変更中オーバーレイ -->
-    <div id="playlist-changing-overlay" class="playlist-changing-overlay" style="display: none;" data-player-target="playlistChangingOverlay">
-      <div class="overlay-content">
-        <span class="loader"></span>
-        <span>プレイリスト変更中...</span>
+
+      <!-- フィードバックボタン -->
+      <div class="player-feedback">
+        <button class="feedback-button good" data-action="click->youtube-player#likeVideo" data-youtube-player-target="likeButton">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+          <span>GOOD</span>
+        </button>
+
+        <button class="feedback-button not-for-me" data-action="click->youtube-player#skipVideo" data-youtube-player-target="skipButton">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/>
+          </svg>
+          <span>NOT FOR ME</span>
+        </button>
+      </div>
+
+      <!-- 歌詞・YouTubeリンク (プレイヤー内に移動) -->
+      <div class="lyrics-link-wrapper" data-youtube-player-target="lyricsSection">
+        <a href="https://www.youtube.com/watch?v=<%= @first_video&.[](:video_id) %>"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="youtube-link-btn"
+           data-youtube-player-target="youtubeLink">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+          <span>YouTubeで歌詞を見る</span>
+        </a>
       </div>
     </div>
   </main>
+
+  <!-- おすすめセクション（レスポンシブグリッド） -->
+  <section class="recommendations-section" data-controller="recommendations" data-recommendations-section-type-value="trending" data-recommendations-section-value-value="">
+    <div class="recommendations-header">
+      <h2>あなたへのおすすめ</h2>
+      <button class="section-refresh-btn" data-action="click->recommendations#refresh" data-recommendations-target="refreshButton" aria-label="更新">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
+      </button>
+    </div>
+    <div class="recommendations-grid" data-recommendations-target="grid">
+      <% @trending_videos&.first(12)&.each_with_index do |video, index| %>
+        <div class="recommendation-card" data-video-id="<%= video[:video_id] %>" data-index="<%= index %>">
+          <div class="recommendation-card-image">
+            <img src="<%= video[:thumbnail] %>" alt="<%= video[:title] %>" loading="lazy">
+            <button class="recommendation-play-btn" data-action="click->recommendations#playVideo" data-video-id="<%= video[:video_id] %>" data-index="<%= index %>">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="m7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606"/>
+              </svg>
+            </button>
+          </div>
+          <div class="recommendation-card-info">
+            <p class="recommendation-title"><%= truncate(video[:title], length: 35) %></p>
+            <p class="recommendation-artist"><%= video[:channel_name] %></p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <!-- 年代別セクション -->
+  <% @era_sections&.each do |section| %>
+    <% if section[:videos].present? %>
+      <section class="recommendations-section" data-controller="recommendations" data-recommendations-section-type-value="era" data-recommendations-section-value-value="<%= section[:era] %>">
+        <div class="recommendations-header">
+          <h2><%= section[:label] %></h2>
+          <button class="section-refresh-btn" data-action="click->recommendations#refresh" data-recommendations-target="refreshButton" aria-label="更新">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="recommendations-grid" data-recommendations-target="grid">
+          <% section[:videos].each_with_index do |video, index| %>
+            <div class="recommendation-card" data-video-id="<%= video[:video_id] %>" data-index="<%= index %>">
+              <div class="recommendation-card-image">
+                <img src="<%= video[:thumbnail] %>" alt="<%= video[:title] %>" loading="lazy">
+                <button class="recommendation-play-btn" data-action="click->recommendations#playVideo" data-video-id="<%= video[:video_id] %>" data-index="<%= index %>">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                    <path d="m7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="recommendation-card-info">
+                <p class="recommendation-title"><%= truncate(video[:title], length: 35) %></p>
+                <p class="recommendation-artist"><%= video[:channel_name] %></p>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+  <% end %>
+
+  <!-- アーティスト別セクション -->
+  <% @artist_sections&.each do |section| %>
+    <% if section[:videos].present? %>
+      <section class="recommendations-section" data-controller="recommendations" data-recommendations-section-type-value="artist" data-recommendations-section-value-value="<%= section[:artist] %>">
+        <div class="recommendations-header">
+          <h2><%= section[:artist] %></h2>
+          <button class="section-refresh-btn" data-action="click->recommendations#refresh" data-recommendations-target="refreshButton" aria-label="更新">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="recommendations-grid" data-recommendations-target="grid">
+          <% section[:videos].each_with_index do |video, index| %>
+            <div class="recommendation-card" data-video-id="<%= video[:video_id] %>" data-index="<%= index %>">
+              <div class="recommendation-card-image">
+                <img src="<%= video[:thumbnail] %>" alt="<%= video[:title] %>" loading="lazy">
+                <button class="recommendation-play-btn" data-action="click->recommendations#playVideo" data-video-id="<%= video[:video_id] %>" data-index="<%= index %>">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                    <path d="m7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="recommendation-card-info">
+                <p class="recommendation-title"><%= truncate(video[:title], length: 35) %></p>
+                <p class="recommendation-artist"><%= video[:channel_name] %></p>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+  <% end %>
+
+  <footer class="player-footer">
+    <p class="youtube-credit">Music provided by YouTube</p>
+    <p class="footer-links">
+      <%= link_to '利用規約', terms_path %> |
+      <%= link_to 'プライバシーポリシー', privacy_path %>
+    </p>
+  </footer>
 </div>
-
-<% if @first_track_uri.present? && @all_track_uris.present? %>
-  <meta name="selected-playlist-id" content="<%= @selected_playlist_id %>">
-
-  <div data-controller="spotify-player" data-spotify-player-token-value="<%= @access_token %>"></div>
-
-  <style>
-    .playlist-changing-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.6);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.2s;
-    }
-    .playlist-changing-overlay .overlay-content {
-      background: #222;
-      padding: 32px 48px;
-      border-radius: 16px;
-      color: #fff;
-      font-size: 1.3em;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
-    .playlist-changing-overlay .loader {
-      border: 4px solid #1DB954;
-      border-top: 4px solid #fff;
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 8px;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .playlist-selection {
-      margin-top: 20px;
-      padding: 0 20px;
-    }
-
-    .playlist-selection-button {
-      width: 100%;
-      padding: 12px;
-      background: #282828;
-      border: none;
-      border-radius: 8px;
-      color: #FFFFFF;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: background-color 0.2s;
-    }
-
-    .playlist-selection-button:hover {
-      background: #383838;
-    }
-
-    .playlist-selection-panel {
-      margin-top: 16px;
-      padding: 16px;
-      background: #282828;
-      border-radius: 8px;
-    }
-
-    .playlist-selection-panel h4 {
-      color: #FFFFFF;
-      margin: 0 0 16px 0;
-      font-size: 16px;
-    }
-
-    .playlist-list {
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .playlist-option {
-      padding: 8px 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .playlist-option label {
-      color: #FFFFFF;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .track-count {
-      color: #B3B3B3;
-      font-size: 0.9em;
-    }
-
-    input[type="radio"] {
-      accent-color: #1DB954;
-    }
-  </style>
-
-  
-<% end %>
-
-<style>
-.album-art-section {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.album-image {
-  width: 300px;
-  height: 300px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  will-change: transform;
-  touch-action: none;
-}
-
-.track-details {
-  text-align: center;
-}
-
-.song-title {
-  font-size: 1.5em;
-  font-weight: bold;
-  margin: 0;
-}
-
-.artist-name {
-  color: #B3B3B3;
-  margin: 5px 0;
-}
-</style>

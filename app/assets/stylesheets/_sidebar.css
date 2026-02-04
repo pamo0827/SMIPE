@@ -1,0 +1,347 @@
+/* App Container - Spotify-like layout */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #000;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1a1a1a 0%, #121212 100%);
+}
+
+/* Sidebar - positioned below header */
+.sidebar {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  width: 280px;
+  height: calc(100vh - 64px);
+  background-color: #000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
+  padding: 8px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #ffffff40;
+  border-radius: 4px;
+}
+
+/* Sidebar Sections Container - horizontal on wide screens */
+.sidebar-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+/* Sidebar Section */
+.sidebar-section {
+  background-color: #121212;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  color: #b3b3b3;
+  font-size: 13px;
+  font-weight: 700;
+  border-bottom: 1px solid #282828;
+  flex-shrink: 0;
+}
+
+.sidebar-section-header svg {
+  flex-shrink: 0;
+}
+
+.sidebar-section-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.sidebar-section-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-section-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-section-content::-webkit-scrollbar-thumb {
+  background: #ffffff30;
+  border-radius: 3px;
+}
+
+/* History Tabs (GOOD / NOT FOR ME) */
+.sidebar-history-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #282828;
+  flex-shrink: 0;
+}
+
+.history-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background-color: transparent;
+  border: none;
+  border-radius: 14px;
+  color: #b3b3b3;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.history-tab:hover {
+  color: #fff;
+  background-color: #1a1a1a;
+}
+
+.history-tab.active {
+  color: #000;
+  background-color: #1ed760;
+}
+
+.history-tab.active svg {
+  fill: #000;
+}
+
+.history-tab svg {
+  flex-shrink: 0;
+}
+
+/* Playlists & History Items */
+.playlist-items,
+.history-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-playlist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  text-decoration: none;
+}
+
+.sidebar-playlist-item:hover {
+  background-color: #1a1a1a;
+}
+
+.sidebar-playlist-cover {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  background-color: #282828;
+  flex-shrink: 0;
+}
+
+.sidebar-playlist-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-playlist-name {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-playlist-type {
+  color: #b3b3b3;
+  font-size: 11px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty Message */
+.sidebar-empty-message {
+  padding: 12px;
+  text-align: center;
+}
+
+.sidebar-empty-message p {
+  color: #b3b3b3;
+  font-size: 12px;
+  margin: 0;
+}
+
+/* Login Prompt in Sidebar */
+.sidebar-login-prompt {
+  background-color: #242424;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 8px;
+}
+
+.sidebar-login-prompt p {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.sidebar-login-subtitle {
+  color: #b3b3b3 !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  margin-bottom: 12px !important;
+}
+
+.sidebar-login-btn {
+  display: inline-block;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 500px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.sidebar-login-btn:hover {
+  transform: scale(1.04);
+  background-color: #f0f0f0;
+}
+
+/* Smaller Login Prompt for History Section */
+.sidebar-login-prompt-small {
+  padding: 12px;
+  text-align: center;
+}
+
+.sidebar-login-prompt-small p {
+  color: #b3b3b3;
+  font-size: 12px;
+  margin: 0 0 8px;
+}
+
+.sidebar-login-btn-small {
+  display: inline-block;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 500px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.sidebar-login-btn-small:hover {
+  transform: scale(1.04);
+  background-color: #f0f0f0;
+}
+
+.loading-playlists {
+  color: #b3b3b3;
+  text-align: center;
+  padding: 16px;
+  font-size: 12px;
+}
+
+/* Wide screen: Library and History side by side */
+@media (min-width: 1200px) {
+  .sidebar {
+    width: 480px;
+  }
+
+  .main-content {
+    margin-left: 480px;
+  }
+
+  .sidebar-sections {
+    flex-direction: row;
+  }
+
+  .sidebar-section {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Mobile overlay when sidebar is open */
+.sidebar-active::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* Mobile: Hide sidebar, show hamburger */
+@media (max-width: 768px) {
+  .sidebar {
+    top: 56px;
+    height: calc(100vh - 56px);
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .sidebar-sections {
+    flex-direction: column;
+  }
+}
+
+/* PC: Show sidebar */
+@media (min-width: 769px) {
+  .sidebar-active::before {
+    display: none;
+  }
+}

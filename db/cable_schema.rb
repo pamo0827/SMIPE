@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_25_090001) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_04_071837) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -45,18 +45,47 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_25_090001) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "playlist_locations", force: :cascade do |t|
+  create_table "music_interactions", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "video_id", null: false
+    t.string "interaction_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "video_id", "interaction_type"], name: "index_music_interactions_on_user_video_type", unique: true
+    t.index ["user_id"], name: "index_music_interactions_on_user_id"
+  end
+
+  create_table "music_pins", force: :cascade do |t|
     t.string "name"
     t.string "uri"
-    t.float "latitude"
-    t.float "longitude"
-    t.string "location_name"
     t.integer "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "comment"
     t.string "first_track_uri"
-    t.index ["user_id"], name: "index_playlist_locations_on_user_id"
+    t.string "video_id"
+    t.string "channel_name"
+    t.string "thumbnail_url"
+    t.integer "duration"
+    t.string "pin_type", default: "song"
+    t.index ["user_id"], name: "index_music_pins_on_user_id"
+  end
+
+  create_table "music_queue_items", force: :cascade do |t|
+    t.integer "music_pin_id", null: false
+    t.integer "posted_by_id", null: false
+    t.integer "received_by_id"
+    t.string "status", default: "pending", null: false
+    t.integer "queue_position", null: false
+    t.datetime "delivered_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["music_pin_id"], name: "index_music_queue_items_on_music_pin_id"
+    t.index ["posted_by_id"], name: "index_music_queue_items_on_posted_by_id"
+    t.index ["queue_position"], name: "index_music_queue_items_on_queue_position"
+    t.index ["received_by_id"], name: "index_music_queue_items_on_received_by_id"
+    t.index ["status", "queue_position"], name: "index_music_queue_items_on_status_and_queue_position"
+    t.index ["status"], name: "index_music_queue_items_on_status"
   end
 
   create_table "playlists", force: :cascade do |t|
@@ -86,17 +115,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_25_090001) do
     t.string "image"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.decimal "latitude"
-    t.decimal "longitude"
-    t.string "location_name"
-    t.datetime "last_location_update"
-    t.string "access_token"
-    t.string "refresh_token"
-    t.datetime "expires_at"
+    t.string "email"
+    t.string "provider", default: "google"
+    t.string "password_digest"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "playlist_locations", "users"
+  add_foreign_key "music_interactions", "users"
+  add_foreign_key "music_pins", "users"
+  add_foreign_key "music_queue_items", "music_pins"
+  add_foreign_key "music_queue_items", "users", column: "posted_by_id"
+  add_foreign_key "music_queue_items", "users", column: "received_by_id"
   add_foreign_key "playlists", "users"
 end

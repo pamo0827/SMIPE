@@ -1,0 +1,29 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <h1 class="auth-title">SMIPEにログイン</h1>
+
+    <% if flash[:danger] %>
+      <div class="auth-error"><%= flash[:danger] %></div>
+    <% end %>
+
+    <%= form_with url: login_path, scope: :session, local: true, class: "auth-form" do |f| %>
+      <div class="auth-field">
+        <%= f.label :email, "メールアドレス", class: "auth-label" %>
+        <%= f.email_field :email, class: "auth-input", placeholder: "メールアドレス", autofocus: true %>
+      </div>
+
+      <div class="auth-field">
+        <%= f.label :password, "パスワード", class: "auth-label" %>
+        <%= f.password_field :password, class: "auth-input", placeholder: "パスワード" %>
+      </div>
+
+      <%= f.submit "ログイン", class: "auth-submit-btn" %>
+    <% end %>
+
+    <div class="auth-divider">
+      <span>アカウントをお持ちでないですか？</span>
+    </div>
+
+    <%= link_to "SMIPEに登録する", signup_path, class: "auth-secondary-btn" %>
+  </div>
+</div>

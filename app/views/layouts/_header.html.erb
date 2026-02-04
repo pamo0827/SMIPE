@@ -1,51 +1,60 @@
 <header class="header">
-  <% if logged_in? && !current_page?(root_path) && !current_page?(login_path) %>
+  <% unless current_page?(login_path) || current_page?(signup_path) %>
     <div class="header-inner-container">
-      <div class="logo-and-nav">
-        <button class="hamburger-menu" id="hamburgerMenuButton" aria-label="Open menu" aria-expanded="false" aria-controls="mobileNavMenu">
+      <!-- 左側：ロゴ -->
+      <div class="header-left">
+        <button class="hamburger-menu" id="hamburgerMenuButton" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar">
           <svg viewBox="0 0 100 80" width="24" height="24" fill="#FFFFFF">
             <rect width="100" height="15"></rect>
             <rect y="30" width="100" height="15"></rect>
             <rect y="60" width="100" height="15"></rect>
           </svg>
         </button>
-        <%= link_to player_page_path, class: "header-logo-link" do %>
-          <%= image_tag 'SMIPE_logo.png', class: 'header-smipe-logo', alt: 'SMIPE Logo', size: '40x40' %>
+        <%= link_to root_path, class: "header-logo-link" do %>
+          <%= image_tag 'SMIPE_logo.png', class: 'header-smipe-logo', alt: 'SMIPE Logo' %>
           <span class="header-site-name">SMIPE</span>
         <% end %>
       </div>
 
-      <nav class="mobile-nav" id="mobileNavMenu" aria-hidden="true">
-        <ul class="mobile-nav-list">
-          <li>
-            <%= link_to player_page_path, class: "mobile-nav-item" do %>
-              <i class="fas fa-music"></i> Player
-            <% end %>
-          </li>
-          <li>
-            <%= link_to map_path, class: "mobile-nav-item" do %>
-              <i class="fas fa-map-marker-alt"></i> Map
-            <% end %>
-          </li>
-          <li>
-            <%= link_to playlists_path, class: "mobile-nav-item" do %>
-              <i class="fas fa-list"></i> Playlist
-            <% end %>
-          </li>
-        </ul>
-      </nav>
-
-      <div class="user-session-controls">
-        <% if current_user.try(:spotify_image_url).present? %>
-          <img src="<%= current_user.spotify_image_url %>" alt="ユーザーアイコン" class="user-avatar" width="30" height="30" style="border-radius: 50%;" />
-        <% else %>
-          <svg class="user-avatar-placeholder" viewBox="0 0 24 24" width="30" height="30" fill="#FFFFFF">
-            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      <!-- 中央：ホームボタン + 検索バー -->
+      <div class="header-center">
+        <%= link_to root_path, class: "header-home-btn", aria: { label: "ホーム" } do %>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M12.5 3.247a1 1 0 0 0-1 0L4 7.577V20h4.5v-6a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v6H20V7.577l-7.5-4.33zm-2-1.732a3 3 0 0 1 3 0l7.5 4.33a2 2 0 0 1 1 1.732V21a1 1 0 0 1-1 1h-6.5a1 1 0 0 1-1-1v-6h-3v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.577a2 2 0 0 1 1-1.732l7.5-4.33z"/>
           </svg>
         <% end %>
 
-        <span class="header-username"><%= current_user.try(:name) || "User" %></span>
-        <%= link_to "Logout", logout_path, data: { turbo_method: :delete }, class: "header-logout-link" %>
+        <div class="header-search-wrapper" data-controller="search">
+          <div class="header-search-container">
+            <button class="header-search-icon" aria-label="検索" tabindex="-1">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M10.533 1.27893C5.35215 1.27893 1.12598 5.41887 1.12598 10.5579C1.12598 15.697 5.35215 19.8369 10.533 19.8369C12.767 19.8369 14.8235 19.0671 16.4402 17.7794L20.7929 22.132C21.1834 22.5226 21.8166 22.5226 22.2071 22.132C22.5976 21.7415 22.5976 21.1083 22.2071 20.7178L17.8634 16.3741C19.1616 14.7849 19.94 12.7634 19.94 10.5579C19.94 5.41887 15.7138 1.27893 10.533 1.27893ZM3.12598 10.5579C3.12598 6.55226 6.42768 3.27893 10.533 3.27893C14.6383 3.27893 17.94 6.55226 17.94 10.5579C17.94 14.5636 14.6383 17.8369 10.533 17.8369C6.42768 17.8369 3.12598 14.5636 3.12598 10.5579Z"/>
+              </svg>
+            </button>
+            <input type="search"
+                   class="header-search-input"
+                   placeholder="何を再生したいですか？"
+                   data-search-target="input"
+                   data-action="input->search#onInput keydown->search#onKeydown focus->search#onFocus"
+                   aria-label="何を再生したいですか？"
+                   autocomplete="off">
+          </div>
+          <!-- 検索結果ドロップダウン -->
+          <div class="search-results" data-search-target="results"></div>
+        </div>
+      </div>
+
+      <!-- 右側：ユーザーセッションコントロール -->
+      <div class="header-right">
+        <% if logged_in? %>
+          <button class="header-user-btn">
+            <span class="header-user-initial"><%= current_user.name&.first&.upcase || "U" %></span>
+          </button>
+          <%= link_to "ログアウト", logout_path, data: { turbo_method: :delete }, class: "header-logout-link" %>
+        <% else %>
+          <%= link_to '登録', signup_path, class: 'header-signup-link' %>
+          <%= link_to 'ログイン', login_path, class: 'header-login-btn' %>
+        <% end %>
       </div>
     </div>
   <% end %>

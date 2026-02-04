@@ -5,67 +5,57 @@
 </p>
 
 <p align="center">
-  <strong>音楽で、世界とつながる。あなたのいる場所が、新しいプレイリストになる。</strong>
+  <strong>YouTubeの音楽をシンプルに楽しむ</strong>
 </p>
 
-## 📖 概要
+## 概要
 
-SMIPEは、位置情報と音楽を組み合わせた革新的なソーシャル音楽共有プラットフォームです。Spotify APIと連携し、ユーザーの現在地に基づいて、近くにいる人々と音楽を共有し、新しい音楽の発見を促進します。
+SMIPEは、YouTubeの音楽をシンプルに楽しめる音楽プレイヤーアプリです。日本のトレンド音楽を自動再生し、直感的なUIで音楽体験を提供します。
 
-## ✨ 主な機能
+## 主な機能
 
-### 🗺️ 位置情報機能
-- **現在地の共有**: GPSを使用して現在地を取得・更新
-- **近くのユーザー検索**: 指定した半径内にいるユーザーを発見
-- **マップビュー**: インタラクティブな地図で位置情報を可視化
+### 音楽機能
+- **YouTube音楽再生**: 日本のトレンド音楽を自動表示・再生
+- **音楽検索**: 曲名やアーティスト名でYouTube音楽を検索
+- **おすすめ**: あなたへのおすすめ音楽を表示
+- **フィードバック**: GOOD / NOT FOR ME ボタンで好みを記録
 
-### 🎵 音楽機能
-- **Spotify連携**: Spotifyアカウントでログイン
-- **プレイリスト管理**: 自分のプレイリストを表示・管理
-- **音楽プレイヤー**: Web上で直接音楽を再生
-- **トラック情報表示**: 曲の詳細情報を確認
+### ユーザー機能
+- **メール認証**: メールアドレスとパスワードで登録・ログイン
+- **プレイリスト**: お気に入りの曲をプレイリストに保存（ログイン時）
 
-### 👥 ソーシャル機能
-- **ユーザープロフィール**: Spotifyのプロフィール情報を表示
-- **音楽の共有**: 他のユーザーが聴いている音楽を発見
-- **共通の音楽趣味**: 近くにいる同じ音楽好きのユーザーとつながる
-
-## 🛠 技術スタック
+## 技術スタック
 
 ### バックエンド
-- **Ruby on Rails 8.0.~**
+- **Ruby on Rails 8.0**
 - **Ruby 3.3**
 - **SQLite3** (開発環境)
+- **bcrypt** (パスワード暗号化)
 
 ### フロントエンド
 - **Stimulus.js** (Rails標準のJavaScriptフレームワーク)
 - **Turbo** (SPA-likeな体験を提供)
-- **Import Maps** (モダンなJavaScript管理)
+- **YouTube iframe API** (音楽再生)
 
-### 外部API・サービス
-- **Spotify Web API** (音楽データと再生機能)
-- **OmniAuth Spotify** (認証)
-- **RSpotify** (Spotify APIのRubyラッパー)
+### 外部API
+- **YouTube Data API v3** (音楽検索・トレンド取得・動画詳細)
 
-### デプロイメント・インフラ
+### デプロイメント
+- **Render** (ホスティング)
 - **Docker** (コンテナ化)
-- **Kamal** (デプロイメントツール)
-- **GitHub Actions** (CI/CD)
 
-## 📋 必要要件
+## 必要要件
 
 - Ruby 3.2.2以上
 - Rails 8.0.0以上
-- Node.js (JavaScript実行環境)
-- Spotify開発者アカウント
-- Spotify APIの認証情報（Client ID、Client Secret）
+- YouTube Data API v3 認証情報（API Key）
 
-## 🚀 セットアップ
+## セットアップ
 
 ### 1. リポジトリのクローン
 
 ```bash
-git clone https://github.com/yourusername/SMIPE.git
+git clone https://github.com/GYact/SMIPE.git
 cd SMIPE
 ```
 
@@ -77,11 +67,10 @@ bundle install
 
 ### 3. 環境変数の設定
 
-`.env`ファイルをプロジェクトルートに作成し、以下の環境変数を設定：
+`.env`ファイルをプロジェクトルートに作成：
 
 ```env
-SPOTIFY_CLIENT_ID=your_spotify_client_id
-SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+YOUTUBE_API_KEY=your_youtube_api_key
 ```
 
 ### 4. データベースのセットアップ
@@ -89,7 +78,6 @@ SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
 ```bash
 rails db:create
 rails db:migrate
-rails db:seed # (オプション：サンプルデータの投入)
 ```
 
 ### 5. アプリケーションの起動
@@ -100,68 +88,31 @@ rails server
 
 ブラウザで `http://localhost:3000` にアクセスしてください。
 
-## 🐳 Dockerでの実行
+## 使い方
 
-```bash
-# イメージのビルド
-docker build -t smipe .
+1. **アクセス**: `http://localhost:3000` にアクセス
+2. **自動再生**: 日本のトレンド音楽が自動で再生されます
+3. **操作**:
+   - 再生/一時停止: 中央のボタンまたはアルバムアートをクリック
+   - 次の曲/前の曲: コントロールボタンで操作
+   - GOOD: 気に入った曲にマーク
+   - NOT FOR ME: スキップして次の曲へ
+4. **検索**: ヘッダーの検索バーで曲を検索
 
-# コンテナの起動
-docker run -p 3000:3000 -e SPOTIFY_CLIENT_ID=your_id -e SPOTIFY_CLIENT_SECRET=your_secret smipe
-```
+## カラースキーム
 
-## 📱 使い方
+- プライマリカラー: #1DB954 (Green)
+- 背景色: #121212 (Dark)
+- テキスト: #FFFFFF / #B3B3B3
 
-1. **ログイン**: ホームページからSpotifyアカウントでログイン
-2. **位置情報の許可**: ブラウザで位置情報の使用を許可
-3. **マップ表示**: `/map`で現在地と近くのユーザーを確認
-4. **プレイリスト**: `/playlists`で自分のプレイリストを管理
-5. **音楽再生**: `/player`で音楽を再生
-
-## 🧪 テスト
-
-```bash
-# 全てのテストを実行
-rails test
-
-# システムテストを含む全テストの実行
-rails test:system
-```
-
-## 🔒 セキュリティ
-
-- Brakemanによる静的セキュリティ解析を実施
-- 環境変数による機密情報の管理
-- モダンブラウザのみをサポート（セキュリティ向上のため）
-
-## 📝 開発ガイドライン
-
-### コーディング規約
-- RuboCop Rails Omakaseに準拠
-- 行の最大長: 120文字
-- メソッドの最大行数: 15行
-
-### ブランチ戦略
-- `main`: プロダクション環境
-- `develop`: 開発環境
-- `feature/*`: 機能開発
-- `hotfix/*`: 緊急修正
-
-## 🤝 コントリビューション
-
-1. このリポジトリをフォーク
-2. 新しいブランチを作成 (`git checkout -b feature/amazing-feature`)
-3. 変更をコミット (`git commit -m 'Add some amazing feature'`)
-4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
-5. プルリクエストを作成
-
-## 📄 ライセンス
+## ライセンス
 
 このプロジェクトは[MITライセンス](LICENSE)の下で公開されています。
 
-## 📧 お問い合わせ
+## クレジット
 
-プロジェクトに関する質問や提案がある場合は、[Issues](https://github.com/yourusername/SMIPE/issues)でお知らせください。
+- **Music provided by YouTube**
+- YouTube Data API v3を使用
 
 ---
 
