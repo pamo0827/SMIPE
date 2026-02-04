@@ -10,10 +10,6 @@ services:
         value: production
       - key: RAILS_MASTER_KEY
         sync: false
-      - key: GOOGLE_CLIENT_ID
-        sync: false
-      - key: GOOGLE_CLIENT_SECRET
-        sync: false
       - key: YOUTUBE_API_KEY
         sync: false
       - key: RAILS_SERVE_STATIC_FILES
