@@ -164,6 +164,8 @@ class PlayerController < ApplicationController
           }
         }
       end
+    }
+  end
 
   private
 
