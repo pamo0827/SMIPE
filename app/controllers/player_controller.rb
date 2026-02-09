@@ -203,6 +203,59 @@ class PlayerController < ApplicationController
 
   public
 
+  # ライブラリ一覧
+  def library
+    unless logged_in?
+      render json: { items: [] }
+      return
+    end
+
+    items = current_user.library_items.recent
+    render json: {
+      items: items.map { |item|
+        {
+          id: item.id,
+          video_id: item.video_id,
+          title: item.title,
+          channel_name: item.channel_name,
+          thumbnail_url: item.thumbnail_url
+        }
+      }
+    }
+  end
+
+  # ライブラリに追加
+  def add_to_library
+    require_login_for_action
+    return unless logged_in?
+
+    item = current_user.library_items.find_or_initialize_by(video_id: params[:video_id])
+    item.assign_attributes(
+      title: params[:title],
+      channel_name: params[:channel_name],
+      thumbnail_url: params[:thumbnail_url]
+    )
+
+    if item.save
+      render json: { success: true, message: 'ライブラリに追加しました' }
+    else
+      render json: { success: false, error: item.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  # ライブラリから削除
+  def remove_from_library
+    require_login_for_action
+    return unless logged_in?
+
+    item = current_user.library_items.find_by(id: params[:id])
+    if item&.destroy
+      render json: { success: true }
+    else
+      render json: { success: false, error: '見つかりません' }, status: :not_found
+    end
+  end
+
   # セクション更新API
   def refresh_section
     youtube_service = YoutubeService.new

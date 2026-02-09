@@ -61,6 +61,11 @@ Rails.application.routes.draw do
   post '/player/like', to: 'player#like'
   post '/player/dislike', to: 'player#dislike'
 
+  # ライブラリ
+  get '/player/library', to: 'player#library'
+  post '/player/library', to: 'player#add_to_library'
+  delete '/player/library/:id', to: 'player#remove_from_library', as: 'remove_from_library'
+
   # セクション更新
   get '/player/refresh_section', to: 'player#refresh_section'
 end

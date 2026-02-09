@@ -7,6 +7,13 @@ export default class extends Controller {
     this.currentHistoryType = "likes"
     this.historyData = { likes: [], dislikes: [] }
     this.loadHistory()
+
+    this.handleHistoryUpdated = () => this.loadHistory()
+    document.addEventListener('history-updated', this.handleHistoryUpdated)
+  }
+
+  disconnect() {
+    document.removeEventListener('history-updated', this.handleHistoryUpdated)
   }
 
   switchHistoryTab(event) {
@@ -60,33 +67,81 @@ export default class extends Controller {
     }
 
     this.historyItemsTarget.innerHTML = items.map(item => `
-      <div class="sidebar-playlist-item history-item" data-video-id="${item.video_id}" data-action="click->sidebar-history#playVideo">
-        <img src="${item.thumbnail || '/assets/default_playlist.png'}"
-             alt="${item.title}"
-             class="sidebar-playlist-cover">
-        <div class="sidebar-playlist-info">
-          <div class="sidebar-playlist-name">${this.truncate(item.title, 25)}</div>
-          <div class="sidebar-playlist-type">${item.channel_name}</div>
+      <div class="sidebar-playlist-item history-item" data-video-id="${item.video_id}" data-title="${this.escapeAttr(item.title)}" data-channel="${this.escapeAttr(item.channel_name)}" data-thumbnail="${this.escapeAttr(item.thumbnail)}">
+        <div class="library-item-main" data-action="click->sidebar-history#playVideo">
+          <img src="${item.thumbnail || '/assets/default_playlist.png'}"
+               alt="${item.title}"
+               class="sidebar-playlist-cover">
+          <div class="sidebar-playlist-info">
+            <div class="sidebar-playlist-name">${this.truncate(item.title, 22)}</div>
+            <div class="sidebar-playlist-type">${item.channel_name}</div>
+          </div>
         </div>
+        <button class="library-item-add" data-action="click->sidebar-history#addToLibrary" title="ライブラリに追加">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+        </button>
       </div>
     `).join('')
   }
 
   playVideo(event) {
-    const videoId = event.currentTarget.dataset.videoId
+    const item = event.currentTarget.closest('.history-item')
+    const videoId = item?.dataset.videoId
     if (videoId) {
-      // youtube-playerコントローラーにイベントを送信
-      const playerEvent = new CustomEvent('play-video', {
+      document.dispatchEvent(new CustomEvent('play-video', {
         detail: { videoId },
         bubbles: true
+      }))
+    }
+  }
+
+  async addToLibrary(event) {
+    event.stopPropagation()
+    const btn = event.currentTarget
+    const item = btn.closest('.history-item')
+    if (!item) return
+
+    const data = {
+      video_id: item.dataset.videoId,
+      title: item.dataset.title,
+      channel_name: item.dataset.channel,
+      thumbnail_url: item.dataset.thumbnail
+    }
+
+    try {
+      const response = await fetch('/player/library', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': this.getMetaValue('csrf-token')
+        },
+        body: JSON.stringify(data)
       })
-      document.dispatchEvent(playerEvent)
+
+      if (response.ok) {
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="#1DB954"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
+        document.dispatchEvent(new CustomEvent('library-updated'))
+      }
+    } catch (error) {
+      console.error('Failed to add to library:', error)
     }
   }
 
   truncate(str, length) {
     if (!str) return ''
     return str.length > length ? str.substring(0, length) + '...' : str
+  }
+
+  escapeAttr(str) {
+    if (!str) return ''
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;')
+  }
+
+  getMetaValue(name) {
+    const element = document.querySelector(`meta[name="${name}"]`)
+    return element?.getAttribute('content') || ''
   }
 
   showError() {

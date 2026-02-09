@@ -73,8 +73,38 @@
   flex-shrink: 0;
 }
 
-.sidebar-section-header svg {
+.sidebar-section-header > svg {
   flex-shrink: 0;
+}
+
+.sidebar-section-header span {
+  flex: 1;
+}
+
+/* Library Play All Button */
+.library-play-all-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background-color: #1DB954;
+  color: #000;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.library-play-all-btn:hover {
+  transform: scale(1.1);
+  background-color: #1ed760;
+}
+
+.library-play-all-btn svg {
+  margin-left: 2px;
 }
 
 .sidebar-section-content {
@@ -191,6 +221,59 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Library & History item layout */
+.library-item,
+.history-item {
+  position: relative;
+}
+
+.library-item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.library-item-remove,
+.library-item-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #b3b3b3;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.sidebar-playlist-item:hover .library-item-remove,
+.sidebar-playlist-item:hover .library-item-add {
+  opacity: 1;
+}
+
+.library-item-remove:hover {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.15);
+}
+
+.library-item-add:hover {
+  color: #1DB954;
+  background: rgba(29, 185, 84, 0.15);
+}
+
+.sidebar-empty-hint {
+  color: #727272;
+  font-size: 11px;
+  margin-top: 4px;
 }
 
 /* Empty Message */

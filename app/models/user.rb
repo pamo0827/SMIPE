@@ -56,6 +56,7 @@ class User < ApplicationRecord
   # 音楽ピン関連
   has_many :music_pins, dependent: :destroy
   has_many :music_interactions, dependent: :destroy
+  has_many :library_items, dependent: :destroy
   has_many :posted_queue_items, class_name: 'MusicQueueItem', foreign_key: 'posted_by_id', dependent: :destroy
   has_many :received_queue_items, class_name: 'MusicQueueItem', foreign_key: 'received_by_id', dependent: :nullify
 

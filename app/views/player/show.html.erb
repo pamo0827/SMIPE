@@ -3,7 +3,9 @@
     data-controller="youtube-player"
     data-youtube-player-video-ids="<%= @video_ids.to_json %>"
     data-youtube-player-current-index-value="0"
-    data-youtube-player-playing-value="false">
+    data-youtube-player-playing-value="false"
+    data-youtube-player-logged-in-value="<%= logged_in? %>"
+    data-youtube-player-signup-url-value="<%= signup_path %>">
 
     <!-- YouTube Player (hidden) -->
     <div id="youtube-player" data-youtube-player-target="videoPlayer" style="display: none;"></div>

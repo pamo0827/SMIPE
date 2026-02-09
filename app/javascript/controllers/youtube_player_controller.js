@@ -9,7 +9,9 @@ export default class extends Controller {
   static values = {
     videoIds: Array,
     currentIndex: Number,
-    playing: Boolean
+    playing: Boolean,
+    loggedIn: Boolean,
+    signupUrl: String
   }
 
   connect() {
@@ -30,12 +32,17 @@ export default class extends Controller {
     this.handlePlayVideoEvent = this.handlePlayVideoEvent.bind(this)
     document.addEventListener('play-video', this.handlePlayVideoEvent)
 
+    // Listen for play-playlist events (library play all)
+    this.handlePlayPlaylistEvent = this.handlePlayPlaylistEvent.bind(this)
+    document.addEventListener('play-playlist', this.handlePlayPlaylistEvent)
+
     // Load YouTube iframe API
     this.loadYouTubeAPI()
   }
 
   disconnect() {
     document.removeEventListener('play-video', this.handlePlayVideoEvent)
+    document.removeEventListener('play-playlist', this.handlePlayPlaylistEvent)
     if (this.player) {
       this.player.destroy()
     }
@@ -47,6 +54,33 @@ export default class extends Controller {
     if (videoId) {
       this.playVideoById(videoId)
     }
+  }
+
+  handlePlayPlaylistEvent(event) {
+    const { videoIds } = event.detail
+    console.log('Received play-playlist event:', videoIds)
+    if (videoIds && videoIds.length > 0) {
+      this.playPlaylist(videoIds)
+    }
+  }
+
+  playPlaylist(videoIds) {
+    // プレイリストを置き換えて最初から再生
+    this.videoIdsValue = [...videoIds]
+    this.currentIndexValue = 0
+
+    const firstVideoId = videoIds[0]
+
+    if (this.player && this.player.loadVideoById) {
+      this.player.loadVideoById({
+        videoId: firstVideoId,
+        startSeconds: 0
+      })
+    } else {
+      this.pendingVideoId = firstVideoId
+    }
+
+    this.updatePlayerUIWithVideoId(firstVideoId)
   }
 
   playVideoById(videoId) {
@@ -366,6 +400,11 @@ export default class extends Controller {
   }
 
   async likeVideo() {
+    if (!this.loggedInValue) {
+      window.location.href = this.signupUrlValue
+      return
+    }
+
     const videoId = this.videoIdsValue[this.currentIndexValue]
     console.log('Like video:', videoId)
 
@@ -390,6 +429,7 @@ export default class extends Controller {
 
       if (response.ok) {
         this.showToast('GOODに追加しました', 'success')
+        document.dispatchEvent(new CustomEvent('history-updated'))
       } else if (response.status === 401) {
         this.showToast('ログインが必要です', 'error')
       } else {
@@ -397,12 +437,16 @@ export default class extends Controller {
       }
     } catch (error) {
       console.error('Failed to save like:', error)
-      this.showToast('GOODに追加しました', 'success') // Show success even if offline
     }
   }
 
   // NOT FOR ME - skip and record
   async skipVideo() {
+    if (!this.loggedInValue) {
+      window.location.href = this.signupUrlValue
+      return
+    }
+
     const videoId = this.videoIdsValue[this.currentIndexValue]
     console.log('Skip video (not for me):', videoId)
 
@@ -419,6 +463,7 @@ export default class extends Controller {
 
       if (response.ok) {
         this.showToast('NOT FOR MEに追加しました', 'info')
+        document.dispatchEvent(new CustomEvent('history-updated'))
       } else if (response.status === 401) {
         // Continue without saving if not logged in
       }
@@ -428,6 +473,40 @@ export default class extends Controller {
 
     // Move to next video
     this.handleNext()
+  }
+
+  async addToLibrary() {
+    const videoId = this.videoIdsValue[this.currentIndexValue]
+    const title = this.hasSongTitleTarget ? this.songTitleTarget.textContent : ''
+    const channelName = this.hasArtistNameTarget ? this.artistNameTarget.textContent : ''
+    const thumbnailUrl = this.hasAlbumImageTarget ? this.albumImageTarget.src : ''
+
+    if (this.hasLibraryButtonTarget) {
+      this.libraryButtonTarget.classList.add('active')
+      setTimeout(() => this.libraryButtonTarget.classList.remove('active'), 1000)
+    }
+
+    try {
+      const response = await fetch('/player/library', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': this.getMetaValue('csrf-token')
+        },
+        body: JSON.stringify({ video_id: videoId, title, channel_name: channelName, thumbnail_url: thumbnailUrl })
+      })
+
+      if (response.ok) {
+        this.showToast('ライブラリに追加しました', 'success')
+        document.dispatchEvent(new CustomEvent('library-updated'))
+      } else if (response.status === 401) {
+        this.showToast('ログインが必要です', 'error')
+      } else {
+        this.showToast('追加に失敗しました', 'error')
+      }
+    } catch (error) {
+      console.error('Failed to add to library:', error)
+    }
   }
 
   async dislikeVideo() {

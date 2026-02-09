@@ -2,16 +2,23 @@
   <% unless current_page?(login_path) || current_page?(signup_path) %>
     <div class="sidebar-sections">
       <!-- Your Library セクション -->
-      <div class="sidebar-section">
+      <div class="sidebar-section" <% if logged_in? %>data-controller="sidebar-playlists"<% end %>>
         <div class="sidebar-section-header">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <path d="M3 22a1 1 0 0 1-1-1V3a1 1 0 0 1 2 0v18a1 1 0 0 1-1 1zM15.5 2.134A1 1 0 0 0 14 3v18a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6.464a1 1 0 0 0-.5-.866l-6-3.464zM9 2a1 1 0 0 0-1 1v18a1 1 0 1 0 2 0V3a1 1 0 0 0-1-1z"/>
           </svg>
           <span>Your Library</span>
+          <% if logged_in? %>
+            <button class="library-play-all-btn" data-action="click->sidebar-playlists#playAll" data-sidebar-playlists-target="playAllButton" title="ライブラリを再生">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+          <% end %>
         </div>
         <div class="sidebar-section-content">
           <% if logged_in? %>
-            <div class="playlist-items" data-controller="sidebar-playlists">
+            <div class="playlist-items" data-sidebar-playlists-target="items">
               <div class="loading-playlists">読み込み中...</div>
             </div>
           <% else %>

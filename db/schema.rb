@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_04_071837) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_05_073003) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -43,6 +43,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_071837) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "library_items", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "video_id"
+    t.string "title"
+    t.string "channel_name"
+    t.string "thumbnail_url"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "video_id"], name: "index_library_items_on_user_id_and_video_id", unique: true
+    t.index ["user_id"], name: "index_library_items_on_user_id"
   end
 
   create_table "music_interactions", force: :cascade do |t|
@@ -118,10 +130,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_071837) do
     t.string "email"
     t.string "provider", default: "google"
     t.string "password_digest"
+    t.decimal "latitude"
+    t.decimal "longitude"
+    t.string "location_name"
+    t.datetime "last_location_update"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "library_items", "users"
   add_foreign_key "music_interactions", "users"
   add_foreign_key "music_pins", "users"
   add_foreign_key "music_queue_items", "music_pins"
