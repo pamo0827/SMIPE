@@ -1,5 +1,5 @@
 # SMIPE
-YouTubeの音楽をシンプルに楽しめる音楽プレイヤーアプリです。日本のトレンド音楽を自動再生し、直感的なUIで音楽体験を提供します。
+YouTubeの音楽を楽しめる音楽プレイヤーアプリです。日本のトレンド音楽を自動再生し、直感的なUIで音楽体験を提供します。
 
 ## 主な機能
 
@@ -53,10 +53,4 @@ YouTubeの音楽をシンプルに楽しめる音楽プレイヤーアプリで�
 
 - **Music provided by YouTube**
 - YouTube Data API v3を使用
-
----
-
-<p align="center">
-  Made with ❤️ by SMIPE Team
-</p>
 
